@@ -40,7 +40,7 @@ export default function FixedExpensesForm() {
           type="text"
           value={month}
           onChange={(e) => setMonth(e.target.value)}
-          placeholder="June-2025"
+          placeholder="2025-06"
           className="w-full p-2 border rounded"
         />
       </div>

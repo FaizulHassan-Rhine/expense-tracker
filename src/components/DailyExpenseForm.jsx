@@ -4,34 +4,58 @@ import db from "../firebase";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const categories = ["transport", "houseRent", "grocery", "other"];
-
-const DailyExpenseInput = () => {
-  const [month, setMonth] = useState("");
+const categories = ["transport", "houseRent", "grocery"];
+const DailyExpenseForm = ({ month }) => {
   const [date, setDate] = useState("");
-  const [dailyExpenses, setDailyExpenses] = useState(
-    categories.reduce((acc, c) => ({ ...acc, [c]: "" }), {})
-  );
+  const [dailyExpenses, setDailyExpenses] = useState({});
+  const [otherEntries, setOtherEntries] = useState([{ label: "", amount: "" }]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!month || !date) return;
-    const fetchDailyExpenses = async () => {
+
+    const fetchData = async () => {
       try {
-        const snapshot = await get(
-          ref(db, `months/${month}/dailyExpenses/${date}`)
-        );
+        const snapshot = await get(ref(db, `months/${month}/dailyExpenses/${date}`));
         if (snapshot.exists()) {
-          setDailyExpenses(snapshot.val());
+          const data = snapshot.val();
+          const { other, ...rest } = data;
+          setDailyExpenses(rest);
+          if (other && typeof other === "object") {
+            setOtherEntries(
+              Object.entries(other).map(([label, amount]) => ({
+                label,
+                amount: amount.toString(),
+              }))
+            );
+          } else {
+            setOtherEntries([{ label: "", amount: "" }]);
+          }
         } else {
           setDailyExpenses(categories.reduce((acc, c) => ({ ...acc, [c]: "" }), {}));
+          setOtherEntries([{ label: "", amount: "" }]);
         }
-      } catch (error) {
-        toast.error("Failed to load daily expenses: " + error.message);
+      } catch (err) {
+        toast.error("Failed to load daily expenses: " + err.message);
       }
     };
-    fetchDailyExpenses();
+
+    fetchData();
   }, [month, date]);
+
+  const handleOtherChange = (index, field, value) => {
+    const updated = [...otherEntries];
+    updated[index][field] = value;
+    setOtherEntries(updated);
+  };
+
+  const addOtherEntry = () => {
+    setOtherEntries([...otherEntries, { label: "", amount: "" }]);
+  };
+
+  const removeOtherEntry = (index) => {
+    setOtherEntries(otherEntries.filter((_, i) => i !== index));
+  };
 
   const handleChange = (e) => {
     setDailyExpenses({
@@ -43,21 +67,30 @@ const DailyExpenseInput = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!month || !date) {
-      toast.error("Please select both month and date");
+      toast.error("Please select month and date");
       return;
     }
+
     setLoading(true);
     try {
-      // Save daily expenses
-      await set(ref(db, `months/${month}/dailyExpenses/${date}`), dailyExpenses);
+      const otherObject = {};
+      otherEntries.forEach(({ label, amount }) => {
+        if (label && amount) {
+          otherObject[label] = parseInt(amount) || 0;
+        }
+      });
 
-      // Calculate total spent today
-      const totalSpentToday = categories.reduce(
-        (acc, c) => acc + (parseInt(dailyExpenses[c]) || 0),
-        0
-      );
+      const finalData = {
+        ...dailyExpenses,
+        other: otherObject,
+      };
 
-      // Fetch current remaining from monthly summary
+      await set(ref(db, `months/${month}/dailyExpenses/${date}`), finalData);
+
+      const totalSpentToday =
+        categories.reduce((acc, c) => acc + (parseInt(dailyExpenses[c]) || 0), 0) +
+        Object.values(otherObject).reduce((acc, val) => acc + val, 0);
+
       const summaryRef = ref(db, `months/${month}/summary`);
       const summarySnap = await get(summaryRef);
 
@@ -69,25 +102,26 @@ const DailyExpenseInput = () => {
 
       const summary = summarySnap.val();
 
-      // Calculate total spent in month so far (sum all daily expenses except today)
-      const dailyExpensesRef = ref(db, `months/${month}/dailyExpenses`);
-      const allDailySnap = await get(dailyExpensesRef);
+      const allDailySnap = await get(ref(db, `months/${month}/dailyExpenses`));
       let totalSpentInMonth = 0;
+
       if (allDailySnap.exists()) {
-        const allDaysData = allDailySnap.val();
-        for (const dayKey in allDaysData) {
+        const allDays = allDailySnap.val();
+        for (const [dayKey, data] of Object.entries(allDays)) {
           if (dayKey !== date) {
-            const dayData = allDaysData[dayKey];
-            totalSpentInMonth += categories.reduce(
-              (acc, c) => acc + (parseInt(dayData[c]) || 0),
+            const sumFixed = categories.reduce(
+              (acc, c) => acc + (parseInt(data[c]) || 0),
               0
             );
+            const sumOther = data.other
+              ? Object.values(data.other).reduce((acc, val) => acc + (parseInt(val) || 0), 0)
+              : 0;
+            totalSpentInMonth += sumFixed + sumOther;
           }
         }
       }
-      const newRemaining = summary.totalBudget - (totalSpentInMonth + totalSpentToday);
 
-      // Update remaining in monthly summary
+      const newRemaining = summary.totalBudget - (totalSpentInMonth + totalSpentToday);
       await update(summaryRef, { remaining: newRemaining });
 
       toast.success("Daily expenses saved!");
@@ -99,90 +133,85 @@ const DailyExpenseInput = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto p-4 bg-white shadow rounded mt-8">
-      <ToastContainer position="top-right" autoClose={3000} />
-      <h2 className="text-xl font-bold mb-4">Add Daily Expenses</h2>
+    <div className="container mx-auto bg-white p-4 mt-20 shadow rounded">
+      <ToastContainer />
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block font-medium">Date</label>
+          <input
+            type="date"
+            value={date}
+            min={month ? `${month}-01` : ""}
+            max={month ? `${month}-31` : ""}
+            onChange={(e) => setDate(e.target.value)}
+            className="w-full p-2 border rounded"
+            disabled={loading || !month}
+          />
+        </div>
 
-      <label className="block mb-2">
-        Select Month:
-        <input
-          type="month"
-          value={month}
-          onChange={(e) => setMonth(e.target.value)}
-          className="block w-full border rounded p-2 mt-1"
-          disabled={loading}
-        />
-      </label>
+        {categories.map((cat) => (
+          <div key={cat}>
+            <label className="block capitalize font-medium">{cat}</label>
+            <input
+              type="number"
+              name={cat}
+              value={dailyExpenses[cat] || ""}
+              onChange={handleChange}
+              min="0"
+              className="w-full p-2 border rounded"
+              disabled={loading}
+            />
+          </div>
+        ))}
 
-      <label className="block mb-2">
-        Select Date:
-        <input
-          type="date"
-          value={date}
-          min={month ? `${month}-01` : ""}
-          max={month ? `${month}-31` : ""}
-          onChange={(e) => setDate(e.target.value)}
-          className="block w-full border rounded p-2 mt-1"
-          disabled={loading || !month}
-        />
-      </label>
-
-      {month && date && (
-        <form onSubmit={handleSubmit}>
-          {categories.map((cat) => (
-            <label key={cat} className="block mb-3">
-              {cat.charAt(0).toUpperCase() + cat.slice(1)}:
+        <div>
+          <label className="block font-semibold mb-1">Other Expenses (multiple)</label>
+          {otherEntries.map((entry, idx) => (
+            <div key={idx} className="flex items-center gap-2 mb-2">
+              <input
+                type="text"
+                placeholder="Label (e.g., Fruits)"
+                value={entry.label}
+                onChange={(e) => handleOtherChange(idx, "label", e.target.value)}
+                className="p-2 border rounded w-1/2"
+              />
               <input
                 type="number"
-                min="0"
-                name={cat}
-                value={dailyExpenses[cat]}
-                onChange={handleChange}
-                className="block w-full border rounded p-2 mt-1"
-                disabled={loading}
+                placeholder="Amount"
+                value={entry.amount}
+                onChange={(e) => handleOtherChange(idx, "amount", e.target.value)}
+                className="p-2 border rounded w-1/3"
               />
-            </label>
+              <button
+                type="button"
+                onClick={() => removeOtherEntry(idx)}
+                className="text-red-500 font-bold"
+              >
+                &times;
+              </button>
+            </div>
           ))}
-
           <button
-            type="submit"
-            disabled={loading}
-            className={`w-full p-2 rounded text-white ${
-              loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
-            }`}
+            type="button"
+            onClick={addOtherEntry}
+            className="mt-1 px-3 py-1 bg-blue-500 text-white rounded"
           >
-            {loading ? (
-              <div className="flex justify-center items-center">
-                <svg
-                  className="animate-spin h-5 w-5 mr-2 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                  ></path>
-                </svg>
-                Saving...
-              </div>
-            ) : (
-              "Save Daily Expenses"
-            )}
+            + Add Another
           </button>
-        </form>
-      )}
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className={`w-full p-2 rounded text-white ${
+            loading ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
+          }`}
+        >
+          {loading ? "Saving..." : "Save Daily Expenses"}
+        </button>
+      </form>
     </div>
   );
 };
 
-export default DailyExpenseInput;
+export default DailyExpenseForm;

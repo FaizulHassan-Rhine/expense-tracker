@@ -1,1 +1,15 @@
 @import "tailwindcss";
+
+.home-banner {
+  background-image: url('/banner.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white; /* Optional: style for text inside */
+  text-align: center;
+}
+
