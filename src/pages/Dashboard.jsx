@@ -16,16 +16,21 @@ import {
   Line,
   ResponsiveContainer,
 } from "recharts";
+import { motion } from "framer-motion";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
-const categories = ["transport", "houseRent", "grocery", "other"];
-const COLORS = ["#6366F1", "#10B981", "#F59E0B", "#EF4444"];
+const fixedCategories = ["houseRent", "internet"];
+const normalCategories = ["transport", "grocery"];
+const categories = [...fixedCategories, ...normalCategories, "other"];
+const COLORS = ["#6366F1", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6"];
 
 const Dashboard = () => {
   const [month, setMonth] = useState("");
   const [summary, setSummary] = useState(null);
   const [dailyExpenses, setDailyExpenses] = useState({});
   const [monthlyComparisons, setMonthlyComparisons] = useState([]);
-  const [weekRange, setWeekRange] = useState({ start: "", end: "" });
+  const [weekRange, setWeekRange] = useState({ start: null, end: null });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -69,15 +74,18 @@ const Dashboard = () => {
     fetchAllSummaries();
   }, []);
 
-  const filteredDailyExpenses = Object.entries(dailyExpenses).filter(([date]) => {
-    const d = new Date(date);
-    const start = weekRange.start ? new Date(weekRange.start) : null;
-    const end = weekRange.end ? new Date(weekRange.end) : null;
-    return (!start || d >= start) && (!end || d <= end);
-  });
+ const normalize = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+const filteredDailyExpenses = Object.entries(dailyExpenses).filter(([date]) => {
+  const d = normalize(new Date(date));
+  const start = weekRange.start ? normalize(new Date(weekRange.start)) : null;
+  const end = weekRange.end ? normalize(new Date(weekRange.end)) : null;
+  return (!start || d >= start) && (!end || d <= end);
+});
+
 
   const dailyData = filteredDailyExpenses.map(([date, data]) => {
-    const totalFixed = ["transport", "houseRent", "grocery"].reduce(
+    const totalFixed = [...fixedCategories, ...normalCategories].reduce(
       (acc, c) => acc + (parseInt(data[c]) || 0),
       0
     );
@@ -102,16 +110,18 @@ const Dashboard = () => {
     }, 0),
   }));
 
-  const totalSpent = Object.values(dailyExpenses).reduce((acc, d) => {
-    const fixed = ["transport", "houseRent", "grocery"].reduce(
-      (s, c) => s + (parseInt(d[c]) || 0),
-      0
-    );
-    const other = d.other
-      ? Object.values(d.other).reduce((s, v) => s + (parseInt(v) || 0), 0)
-      : 0;
-    return acc + fixed + other;
-  }, 0);
+  const categoryBudgets = categories.map((cat) => {
+    const budgeted = summary?.[cat] ? parseInt(summary[cat]) : 0;
+    const spent = categoryTotals.find((c) => c.name === cat)?.value || 0;
+    return {
+      name: cat,
+      budget: budgeted,
+      spent,
+      remaining: budgeted - spent,
+    };
+  });
+
+  const totalSpent = categoryTotals.reduce((sum, c) => sum + c.value, 0);
 
   const recurringMap = {};
   Object.entries(dailyExpenses).forEach(([date, data]) => {
@@ -148,99 +158,111 @@ const Dashboard = () => {
     });
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 container mx-auto py-6">
-      <h2 className="text-2xl sm:text-3xl font-bold text-blue-800 mb-6">Expense Dashboard</h2>
+    <motion.div
+      className="px-4 sm:px-6 lg:px-8 container mx-auto py-6"
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+    >
+      <h2 className="text-3xl font-extrabold bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-transparent bg-clip-text mb-6">
+        📊 Expense Dashboard
+      </h2>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-4 mb-6 ">
+      <div className="flex flex-wrap gap-4 mb-6 items-end">
         <div>
           <label className="text-sm font-medium">Month</label>
           <input
             type="month"
             value={month}
             onChange={(e) => setMonth(e.target.value)}
-            className="block border rounded p-2"
+            className="block border rounded p-2 shadow-md"
             disabled={loading}
           />
         </div>
         <div>
           <label className="text-sm font-medium">Start Date</label>
-          <input
-            type="date"
-            value={weekRange.start}
-            onChange={(e) => setWeekRange({ ...weekRange, start: e.target.value })}
-            className="block border rounded p-2"
+          <DatePicker
+            selected={weekRange.start}
+            onChange={(date) => setWeekRange({ ...weekRange, start: date })}
+            className="block border rounded p-2 shadow-md"
+            dateFormat="yyyy-MM-dd"
+            placeholderText="Start date"
           />
         </div>
         <div>
           <label className="text-sm font-medium">End Date</label>
-          <input
-            type="date"
-            value={weekRange.end}
-            onChange={(e) => setWeekRange({ ...weekRange, end: e.target.value })}
-            className="block border rounded p-2"
+          <DatePicker
+            selected={weekRange.end}
+            onChange={(date) => setWeekRange({ ...weekRange, end: date })}
+            className="block border rounded p-2 shadow-md"
+            dateFormat="yyyy-MM-dd"
+            placeholderText="End date"
           />
         </div>
       </div>
 
-      {/* Summary Cards */}
       {summary && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center mb-8">
-          <div className="bg-blue-100 p-4 rounded shadow">
-            <p className="font-semibold text-blue-700">Budget</p>
-            <p className="text-xl font-bold">{summary.totalBudget} Tk</p>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 text-center">
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-100 to-blue-200 shadow-xl">
+              <p className="font-semibold text-blue-700">Budget</p>
+              <p className="text-xl font-bold">{summary.totalBudget} Tk</p>
+            </div>
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-red-100 to-red-200 shadow-xl">
+              <p className="font-semibold text-red-700">Spent</p>
+              <p className="text-xl font-bold">{totalSpent} Tk</p>
+            </div>
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-green-100 to-green-200 shadow-xl">
+              <p className="font-semibold text-green-700">Remaining</p>
+              <p className={`text-xl font-bold ${summary.totalBudget - totalSpent < 0 ? "text-red-600" : "text-green-700"}`}>
+                {summary.totalBudget - totalSpent} Tk
+              </p>
+            </div>
           </div>
-          <div className="bg-red-100 p-4 rounded shadow">
-            <p className="font-semibold text-red-700">Spent</p>
-            <p className="text-xl font-bold">{totalSpent} Tk</p>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+            {categoryBudgets.map((c, i) => (
+              <div key={i} className="p-4 rounded-2xl bg-white shadow-md border">
+                <p className="font-semibold capitalize">{c.name}</p>
+                <p>Budget: <strong>{c.budget} Tk</strong></p>
+                <p>Spent: <strong>{c.spent} Tk</strong></p>
+                <p>Remaining: <strong className={c.remaining < 0 ? "text-red-600" : "text-green-600"}>{c.remaining} Tk</strong></p>
+              </div>
+            ))}
           </div>
-          <div className="bg-green-100 p-4 rounded shadow">
-            <p className="font-semibold text-green-700">Remaining</p>
-            <p
-              className={`text-xl font-bold ${
-                summary.totalBudget - totalSpent < 0
-                  ? "text-red-600 animate-pulse"
-                  : "text-green-700"
-              }`}
-            >
-              {summary.totalBudget - totalSpent} Tk
-            </p>
-          </div>
-        </div>
+        </>
       )}
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="p-4 border rounded shadow bg-gray-50">
-          <h4 className="text-lg font-semibold mb-2">📊 Daily Total (Bar)</h4>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+        <div className="p-4 bg-white rounded-xl shadow">
+          <h4 className="font-semibold mb-2">📊 Daily Expenses (Bar)</h4>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={dailyData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
               <YAxis />
               <Tooltip />
-              <Legend />
-              <Bar dataKey="total" fill="#6366F1" />
+              <Bar dataKey="total" fill="#6366F1" animationDuration={1000} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        <div className="p-4 border rounded shadow bg-gray-50">
-          <h4 className="text-lg font-semibold mb-2">🍕 Category Breakdown (Pie)</h4>
+        <div className="p-4 bg-white rounded-xl shadow">
+          <h4 className="font-semibold mb-2">🍕 Category Breakdown (Pie)</h4>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
                 data={categoryTotals}
                 cx="50%"
                 cy="50%"
+                innerRadius={50}
                 outerRadius={90}
-                label={({ name, percent }) =>
-                  `${name}: ${(percent * 100).toFixed(0)}%`
-                }
+                paddingAngle={3}
                 dataKey="value"
+                label={({ name, value }) => `${name}: ${value} Tk`}
               >
                 {categoryTotals.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell key={index} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
               <Tooltip />
@@ -248,57 +270,35 @@ const Dashboard = () => {
           </ResponsiveContainer>
         </div>
 
-        <div className="p-4 border rounded shadow bg-gray-50 col-span-1 lg:col-span-2">
-          <h4 className="text-lg font-semibold mb-2">📈 Spending Trend (Line)</h4>
+        <div className="col-span-full p-4 bg-white rounded-xl shadow">
+          <h4 className="font-semibold mb-2">📈 Spending Trend (Line)</h4>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={dailyData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
               <YAxis />
               <Tooltip />
-              <Line type="monotone" dataKey="total" stroke="#10B981" />
+              <Line type="monotone" dataKey="total" stroke="#10B981" strokeWidth={3} />
             </LineChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* Monthly Comparison */}
-      <div className="mt-10 bg-white rounded p-4 shadow">
-        <h4 className="text-lg font-semibold mb-2">📅 Monthly Comparison</h4>
-        {monthlyComparisons.length === 0 ? (
-          <p>No monthly data found.</p>
-        ) : (
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={monthlyComparisons}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="budget" fill="#60A5FA" name="Budget" />
-              <Bar dataKey="spent" fill="#F87171" name="Spent" />
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-      </div>
-
-      {/* Recurring */}
-      <div className="mt-10">
-        <h4 className="text-lg font-semibold mb-2">🔁 Recurring Expenses</h4>
+      <div className="mt-8">
+        <h4 className="font-semibold mb-2">🔁 Recurring Expenses</h4>
         {recurringExpenses.length === 0 ? (
-          <p>No recurring expenses detected.</p>
+          <p className="text-gray-500">No recurring expenses detected.</p>
         ) : (
           <ul className="list-disc pl-5 space-y-1 text-sm">
             {recurringExpenses.map((item, idx) => (
               <li key={idx}>
-                <span className="font-medium">{item.label}</span> — {item.amount} Tk on{" "}
-                {item.dates.join(", ")}
+                <span className="font-medium">{item.label}</span> — {item.amount} Tk on {item.dates.join(", ")}
               </li>
             ))}
           </ul>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 

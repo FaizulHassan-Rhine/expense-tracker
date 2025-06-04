@@ -6,6 +6,10 @@ export default function ExpenseSummary({ month }) {
   const [summary, setSummary] = useState(null);
   const [dailyExpenses, setDailyExpenses] = useState({});
 
+  const fixedCategories = ["houseRent", "internet"];
+  const normalCategories = ["transport", "grocery"];
+  const allCategories = [...fixedCategories, ...normalCategories];
+
   useEffect(() => {
     const summaryRef = ref(db, `months/${month}/summary`);
     const dailyRef = ref(db, `months/${month}/dailyExpenses`);
@@ -27,7 +31,7 @@ export default function ExpenseSummary({ month }) {
   if (!summary) return <p className="text-center text-gray-500">Loading summary...</p>;
 
   const getDayTotal = (day) => {
-    const fixed = ["transport", "houseRent", "grocery"].reduce(
+    const fixed = allCategories.reduce(
       (sum, cat) => sum + (parseInt(day[cat]) || 0),
       0
     );
@@ -56,9 +60,11 @@ export default function ExpenseSummary({ month }) {
             <li key={day} className="border border-gray-200 p-3 rounded">
               <p className="font-medium text-blue-600">Date: {day} — <span className="text-black">Total: {getDayTotal(data)} Tk</span></p>
               <ul className="ml-4 list-disc">
-                <li>Transport: {data.transport || 0} Tk</li>
-                <li>House Rent: {data.houseRent || 0} Tk</li>
-                <li>Grocery: {data.grocery || 0} Tk</li>
+                {allCategories.map((cat) => (
+                  <li key={cat}>
+                    {cat.charAt(0).toUpperCase() + cat.slice(1)}: {data[cat] || 0} Tk
+                  </li>
+                ))}
                 {data.other && typeof data.other === "object" && (
                   <li className="mt-1">Other:
                     <ul className="ml-4 list-disc text-gray-700">

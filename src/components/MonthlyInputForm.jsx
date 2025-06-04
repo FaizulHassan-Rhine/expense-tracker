@@ -5,11 +5,11 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const categories = [
+  "houseRent",  // fixed
+  "internet",   // fixed
   "transport",
-  "houseRent",
   "grocery",
   "electricity",
-  "internet",
   "other",
 ];
 

@@ -1,15 +1,64 @@
 import React, { useState, useEffect } from "react";
-import { ref, get, set, update } from "firebase/database";
+import { ref, get, set, update, push } from "firebase/database";
 import db from "../firebase";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const categories = ["transport", "houseRent", "grocery"];
+const fixedFields = ["houseRent", "internet"];
+const categories = ["transport", "grocery"]; // excluding fixed fields
+
 const DailyExpenseForm = ({ month }) => {
   const [date, setDate] = useState("");
   const [dailyExpenses, setDailyExpenses] = useState({});
   const [otherEntries, setOtherEntries] = useState([{ label: "", amount: "" }]);
   const [loading, setLoading] = useState(false);
+
+  const isEditableDay = () => {
+    if (!date) return false;
+    const dayNumber = new Date(date).getDate();
+    return dayNumber <= 5;
+  };
+
+  const pushNotification = async (msg) => {
+    const id = Date.now().toString();
+    await set(ref(db, `notifications/global/${id}`), {
+      message: msg,
+      read: false,
+      timestamp: Date.now(),
+    });
+  };
+
+  useEffect(() => {
+    const checkFixedFields = async () => {
+      const today = new Date();
+      const currentDay = today.getDate();
+      if (currentDay > 5) {
+        const firstFiveDays = [...Array(5)].map((_, i) => {
+          const d = new Date(today.getFullYear(), today.getMonth(), i + 1);
+          return d.toISOString().split("T")[0];
+        });
+
+        let isFilled = false;
+        for (const d of firstFiveDays) {
+          const snap = await get(ref(db, `months/${month}/dailyExpenses/${d}`));
+          const data = snap.val();
+          if (data && (data.houseRent || data.internet)) {
+            isFilled = true;
+            break;
+          }
+        }
+
+        if (!isFilled) {
+          toast.warn("House Rent and Internet not filled in first 5 days!");
+          await pushNotification("House Rent and Internet bill missing in first 5 days of " + month);
+        }
+      }
+    };
+
+    if (month) {
+      checkFixedFields();
+    }
+  }, [month]);
 
   useEffect(() => {
     if (!month || !date) return;
@@ -32,7 +81,7 @@ const DailyExpenseForm = ({ month }) => {
             setOtherEntries([{ label: "", amount: "" }]);
           }
         } else {
-          setDailyExpenses(categories.reduce((acc, c) => ({ ...acc, [c]: "" }), {}));
+          setDailyExpenses({ ...categories.concat(fixedFields).reduce((acc, c) => ({ ...acc, [c]: "" }), {}) });
           setOtherEntries([{ label: "", amount: "" }]);
         }
       } catch (err) {
@@ -88,7 +137,7 @@ const DailyExpenseForm = ({ month }) => {
       await set(ref(db, `months/${month}/dailyExpenses/${date}`), finalData);
 
       const totalSpentToday =
-        categories.reduce((acc, c) => acc + (parseInt(dailyExpenses[c]) || 0), 0) +
+        [...categories, ...fixedFields].reduce((acc, c) => acc + (parseInt(dailyExpenses[c]) || 0), 0) +
         Object.values(otherObject).reduce((acc, val) => acc + val, 0);
 
       const summaryRef = ref(db, `months/${month}/summary`);
@@ -109,14 +158,14 @@ const DailyExpenseForm = ({ month }) => {
         const allDays = allDailySnap.val();
         for (const [dayKey, data] of Object.entries(allDays)) {
           if (dayKey !== date) {
-            const sumFixed = categories.reduce(
+            const sum = [...categories, ...fixedFields].reduce(
               (acc, c) => acc + (parseInt(data[c]) || 0),
               0
             );
             const sumOther = data.other
               ? Object.values(data.other).reduce((acc, val) => acc + (parseInt(val) || 0), 0)
               : 0;
-            totalSpentInMonth += sumFixed + sumOther;
+            totalSpentInMonth += sum + sumOther;
           }
         }
       }
@@ -148,6 +197,33 @@ const DailyExpenseForm = ({ month }) => {
             disabled={loading || !month}
           />
         </div>
+
+        {fixedFields.map((cat) => (
+          isEditableDay() ? (
+            <div key={cat}>
+              <label className="block capitalize font-medium">{cat}</label>
+              <input
+                type="number"
+                name={cat}
+                value={dailyExpenses[cat] || ""}
+                onChange={handleChange}
+                min="0"
+                className="w-full p-2 border rounded"
+                disabled={loading}
+              />
+            </div>
+          ) : (
+            <div key={cat}>
+              <label className="block capitalize font-medium text-gray-400">{cat} (locked)</label>
+              <input
+                type="number"
+                value={dailyExpenses[cat] || ""}
+                className="w-full p-2 border rounded bg-gray-100 text-gray-500"
+                readOnly
+              />
+            </div>
+          )
+        ))}
 
         {categories.map((cat) => (
           <div key={cat}>
