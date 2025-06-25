@@ -17,7 +17,7 @@ export default function DailyExpense() {
           value={selectedMonth}
           onChange={(e) => setSelectedMonth(e.target.value)}
           placeholder="2025-06"
-          className="w-full p-2 border rounded"
+          className="w-full p-2 border rounded "
         />
       </div>
 
