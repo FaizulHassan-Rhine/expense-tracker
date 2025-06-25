@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ref, get, set, update, push } from "firebase/database";
+import { ref, get, set, update } from "firebase/database";
 import db from "../firebase";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -13,10 +13,10 @@ const DailyExpenseForm = ({ month }) => {
   const [otherEntries, setOtherEntries] = useState([{ label: "", amount: "" }]);
   const [loading, setLoading] = useState(false);
 
-  const isEditableDay = () => {
+  const isFirstFiveDays = () => {
     if (!date) return false;
-    const dayNumber = new Date(date).getDate();
-    return dayNumber <= 5;
+    const selected = new Date(date);
+    return selected.getDate() >= 1 && selected.getDate() <= 5;
   };
 
   const pushNotification = async (msg) => {
@@ -30,34 +30,30 @@ const DailyExpenseForm = ({ month }) => {
 
   useEffect(() => {
     const checkFixedFields = async () => {
+      if (!month) return;
       const today = new Date();
-      const currentDay = today.getDate();
-      if (currentDay > 5) {
+      const currentMonth = today.toISOString().slice(0, 7);
+      if (month === currentMonth && today.getDate() <= 5) {
         const firstFiveDays = [...Array(5)].map((_, i) => {
           const d = new Date(today.getFullYear(), today.getMonth(), i + 1);
           return d.toISOString().split("T")[0];
         });
-
-        let isFilled = false;
+        let isPaid = false;
         for (const d of firstFiveDays) {
           const snap = await get(ref(db, `months/${month}/dailyExpenses/${d}`));
           const data = snap.val();
           if (data && (data.houseRent || data.internet)) {
-            isFilled = true;
+            isPaid = true;
             break;
           }
         }
-
-        if (!isFilled) {
+        if (!isPaid) {
           toast.warn("House Rent and Internet not filled in first 5 days!");
           await pushNotification("House Rent and Internet bill missing in first 5 days of " + month);
         }
       }
     };
-
-    if (month) {
-      checkFixedFields();
-    }
+    checkFixedFields();
   }, [month]);
 
   useEffect(() => {
@@ -198,31 +194,19 @@ const DailyExpenseForm = ({ month }) => {
           />
         </div>
 
-        {fixedFields.map((cat) => (
-          isEditableDay() ? (
-            <div key={cat}>
-              <label className="block capitalize font-medium">{cat}</label>
-              <input
-                type="number"
-                name={cat}
-                value={dailyExpenses[cat] || ""}
-                onChange={handleChange}
-                min="0"
-                className="w-full p-2 border rounded"
-                disabled={loading}
-              />
-            </div>
-          ) : (
-            <div key={cat}>
-              <label className="block capitalize font-medium text-gray-400">{cat} (locked)</label>
-              <input
-                type="number"
-                value={dailyExpenses[cat] || ""}
-                className="w-full p-2 border rounded bg-gray-100 text-gray-500"
-                readOnly
-              />
-            </div>
-          )
+        {isFirstFiveDays() && fixedFields.map((cat) => (
+          <div key={cat}>
+            <label className="block capitalize font-medium">{cat}</label>
+            <input
+              type="number"
+              name={cat}
+              value={dailyExpenses[cat] || ""}
+              onChange={handleChange}
+              min="0"
+              className="w-full p-2 border rounded"
+              disabled={loading}
+            />
+          </div>
         ))}
 
         {categories.map((cat) => (
