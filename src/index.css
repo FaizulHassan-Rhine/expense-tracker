@@ -13,3 +13,8 @@
   text-align: center;
 }
 
+.custom-datepicker-popper,
+.react-datepicker-popper {
+  z-index: 9999 !important;
+}
+

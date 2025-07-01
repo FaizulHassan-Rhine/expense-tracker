@@ -162,7 +162,7 @@ const Dashboard = () => {
             type="month"
             value={month}
             onChange={(e) => setMonth(e.target.value)}
-            className="block border rounded p-2 shadow-md"
+            className="block w-full p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
             disabled={loading}
           />
         </div>
@@ -171,9 +171,11 @@ const Dashboard = () => {
           <DatePicker
             selected={weekRange.start}
             onChange={(date) => setWeekRange({ ...weekRange, start: date })}
-            className="block border rounded p-2 shadow-md"
+            className="block w-full p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
             dateFormat="yyyy-MM-dd"
             placeholderText="Start date"
+            withPortal
+            popperClassName="custom-datepicker-popper"
           />
         </div>
         <div>
@@ -181,29 +183,31 @@ const Dashboard = () => {
           <DatePicker
             selected={weekRange.end}
             onChange={(date) => setWeekRange({ ...weekRange, end: date })}
-            className="block border rounded p-2 shadow-md"
+            className="block w-full p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
             dateFormat="yyyy-MM-dd"
             placeholderText="End date"
+            withPortal
+            popperClassName="custom-datepicker-popper"
           />
         </div>
       </div>
 
-      <div className="sticky top-0 z-20 bg-white shadow-md rounded-xl mb-6 flex flex-wrap justify-between items-center p-4 gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">💰</span>
-          <div>
+      <div className="sticky top-16 z-20 bg-white shadow-md rounded-xl mb-6 flex flex-wrap justifyleftt items-center p-4 gap-4">
+        <div className="flex items-center gap-2 bg-green-200 p-2 rounded-xl">
+          <span cassName="text-2xl">💰</span>
+          <div > 
             <div className="text-xs text-gray-500">Total Budget</div>
-            <div className="text-lg font-bold text-blue-700">{summary?.totalBudget ?? '--'} Tk</div>
+            <div className="text-lg font-bold text-green-600">{summary?.totalBudget ?? '--'} Tk</div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 bg-red-200 p-2 rounded-xl">
           <span className="text-2xl">💸</span>
           <div>
             <div className="text-xs text-gray-500">Total Spent</div>
             <div className="text-lg font-bold text-red-600">{totalSpent ?? '--'} Tk</div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 bg-yellow-100 p-2 rounded-xl">
           <span className="text-2xl">🟢</span>
           <div>
             <div className="text-xs text-gray-500">Remaining</div>
@@ -232,7 +236,8 @@ const Dashboard = () => {
         </div>
       )}
 
-      {filteredEntries.length > 0 && (
+     <div className="flex justify-between mb-6">
+     {filteredEntries.length > 0 && (
         <div className="mb-6">
           <div className="font-semibold mb-2">🔥 Top 3 Spending Days</div>
           <div className="flex gap-4 flex-wrap">
@@ -270,6 +275,7 @@ const Dashboard = () => {
           </div>
         </div>
       )}
+     </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
         <div className="p-4 bg-white rounded-xl shadow">
@@ -340,7 +346,7 @@ const Dashboard = () => {
             link.download = `${month || 'expenses'}_breakdown.csv`;
             link.click();
           }}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow"
+          className="py-2 px-4 rounded-xl text-white font-bold shadow-md transition bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
         >
           ⬇️ Download CSV
         </button>

@@ -90,7 +90,7 @@ const AdminPanel = () => {
         <select
           value={selectedMonth}
           onChange={(e) => loadMonthData(e.target.value)}
-          className="block border rounded p-2 w-full"
+          className="block w-full p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
         >
           <option value="">-- Select Month --</option>
           {months.map((m) => (
@@ -105,7 +105,7 @@ const AdminPanel = () => {
             <h3 className="font-semibold text-lg">Daily Records for {selectedMonth}</h3>
             <button
               onClick={deleteMonth}
-              className="bg-red-600 text-white px-4 py-1 rounded"
+              className="py-2 px-4 rounded-xl text-white font-bold shadow-md transition bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
             >
               Delete Entire Month
             </button>
@@ -150,7 +150,7 @@ const AdminPanel = () => {
           <div className="text-right mt-4">
             <button
               onClick={exportCSV}
-              className="bg-indigo-600 text-white px-4 py-1 rounded hover:bg-indigo-700 text-sm"
+              className="py-2 px-4 rounded-xl text-white font-bold shadow-md transition bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
             >
               Export to CSV
             </button>

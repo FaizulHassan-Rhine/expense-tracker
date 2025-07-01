@@ -4,20 +4,17 @@ import db from "../firebase";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const fixedFields = ["houseRent", "internet"];
+const fixedFields = ["houseRent", "savings", "internet", "electricity"];
 const categories = ["transport", "grocery"]; // excluding fixed fields
 
 const DailyExpenseForm = ({ month }) => {
   const [date, setDate] = useState("");
   const [dailyExpenses, setDailyExpenses] = useState({});
   const [otherEntries, setOtherEntries] = useState([{ label: "", amount: "" }]);
+  const [groceryEntries, setGroceryEntries] = useState([{ label: "", amount: "" }]);
+  const [transportEntries, setTransportEntries] = useState([{ label: "", amount: "" }]);
   const [loading, setLoading] = useState(false);
-
-  const isFirstFiveDays = () => {
-    if (!date) return false;
-    const selected = new Date(date);
-    return selected.getDate() >= 1 && selected.getDate() <= 5;
-  };
+  const [fixedFieldsToShow, setFixedFieldsToShow] = useState(fixedFields);
 
   const pushNotification = async (msg) => {
     const id = Date.now().toString();
@@ -64,7 +61,7 @@ const DailyExpenseForm = ({ month }) => {
         const snapshot = await get(ref(db, `months/${month}/dailyExpenses/${date}`));
         if (snapshot.exists()) {
           const data = snapshot.val();
-          const { other, ...rest } = data;
+          const { other, grocery, transport, ...rest } = data;
           setDailyExpenses(rest);
           if (other && typeof other === "object") {
             setOtherEntries(
@@ -76,9 +73,31 @@ const DailyExpenseForm = ({ month }) => {
           } else {
             setOtherEntries([{ label: "", amount: "" }]);
           }
+          if (grocery && typeof grocery === "object") {
+            setGroceryEntries(
+              Object.entries(grocery).map(([label, amount]) => ({
+                label,
+                amount: amount.toString(),
+              }))
+            );
+          } else {
+            setGroceryEntries([{ label: "", amount: "" }]);
+          }
+          if (transport && typeof transport === "object") {
+            setTransportEntries(
+              Object.entries(transport).map(([label, amount]) => ({
+                label,
+                amount: amount.toString(),
+              }))
+            );
+          } else {
+            setTransportEntries([{ label: "", amount: "" }]);
+          }
         } else {
           setDailyExpenses({ ...categories.concat(fixedFields).reduce((acc, c) => ({ ...acc, [c]: "" }), {}) });
           setOtherEntries([{ label: "", amount: "" }]);
+          setGroceryEntries([{ label: "", amount: "" }]);
+          setTransportEntries([{ label: "", amount: "" }]);
         }
       } catch (err) {
         toast.error("Failed to load daily expenses: " + err.message);
@@ -86,6 +105,28 @@ const DailyExpenseForm = ({ month }) => {
     };
 
     fetchData();
+  }, [month, date]);
+
+  useEffect(() => {
+    async function checkFixedFieldsEntered() {
+      if (!month) return;
+      const allDailySnap = await get(ref(db, `months/${month}/dailyExpenses`));
+      if (!allDailySnap.exists()) {
+        setFixedFieldsToShow(fixedFields);
+        return;
+      }
+      const allDays = allDailySnap.val();
+      const entered = new Set();
+      for (const dayData of Object.values(allDays)) {
+        fixedFields.forEach((field) => {
+          if (dayData[field] && dayData[field] !== "") {
+            entered.add(field);
+          }
+        });
+      }
+      setFixedFieldsToShow(fixedFields.filter((f) => !entered.has(f)));
+    }
+    checkFixedFieldsEntered();
   }, [month, date]);
 
   const handleOtherChange = (index, field, value) => {
@@ -100,6 +141,34 @@ const DailyExpenseForm = ({ month }) => {
 
   const removeOtherEntry = (index) => {
     setOtherEntries(otherEntries.filter((_, i) => i !== index));
+  };
+
+  const handleGroceryChange = (index, field, value) => {
+    const updated = [...groceryEntries];
+    updated[index][field] = value;
+    setGroceryEntries(updated);
+  };
+
+  const addGroceryEntry = () => {
+    setGroceryEntries([...groceryEntries, { label: "", amount: "" }]);
+  };
+
+  const removeGroceryEntry = (index) => {
+    setGroceryEntries(groceryEntries.filter((_, i) => i !== index));
+  };
+
+  const handleTransportChange = (index, field, value) => {
+    const updated = [...transportEntries];
+    updated[index][field] = value;
+    setTransportEntries(updated);
+  };
+
+  const addTransportEntry = () => {
+    setTransportEntries([...transportEntries, { label: "", amount: "" }]);
+  };
+
+  const removeTransportEntry = (index) => {
+    setTransportEntries(transportEntries.filter((_, i) => i !== index));
   };
 
   const handleChange = (e) => {
@@ -124,16 +193,32 @@ const DailyExpenseForm = ({ month }) => {
           otherObject[label] = parseInt(amount) || 0;
         }
       });
-
+      const groceryObject = {};
+      groceryEntries.forEach(({ label, amount }) => {
+        if (label && amount) {
+          groceryObject[label] = parseInt(amount) || 0;
+        }
+      });
+      const transportObject = {};
+      transportEntries.forEach(({ label, amount }) => {
+        if (label && amount) {
+          transportObject[label] = parseInt(amount) || 0;
+        }
+      });
       const finalData = {
         ...dailyExpenses,
+        grocery: groceryObject,
+        transport: transportObject,
         other: otherObject,
       };
 
       await set(ref(db, `months/${month}/dailyExpenses/${date}`), finalData);
 
+      const sumGrocery = Object.values(groceryObject).reduce((acc, val) => acc + val, 0);
+      const sumTransport = Object.values(transportObject).reduce((acc, val) => acc + val, 0);
       const totalSpentToday =
         [...categories, ...fixedFields].reduce((acc, c) => acc + (parseInt(dailyExpenses[c]) || 0), 0) +
+        sumGrocery + sumTransport +
         Object.values(otherObject).reduce((acc, val) => acc + val, 0);
 
       const summaryRef = ref(db, `months/${month}/summary`);
@@ -158,10 +243,16 @@ const DailyExpenseForm = ({ month }) => {
               (acc, c) => acc + (parseInt(data[c]) || 0),
               0
             );
+            const sumGrocery = data.grocery
+              ? Object.values(data.grocery).reduce((acc, val) => acc + (parseInt(val) || 0), 0)
+              : 0;
+            const sumTransport = data.transport
+              ? Object.values(data.transport).reduce((acc, val) => acc + (parseInt(val) || 0), 0)
+              : 0;
             const sumOther = data.other
               ? Object.values(data.other).reduce((acc, val) => acc + (parseInt(val) || 0), 0)
               : 0;
-            totalSpentInMonth += sum + sumOther;
+            totalSpentInMonth += sum + sumGrocery + sumTransport + sumOther;
           }
         }
       }
@@ -178,23 +269,23 @@ const DailyExpenseForm = ({ month }) => {
   };
 
   return (
-    <div className="container mx-auto bg-white p-4 mt-20 shadow rounded">
+    <div className="container mx-auto bg-white p-8 mt-20 shadow-xl rounded-2xl max-w-4xl">
       <ToastContainer />
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block font-medium">Date</label>
+          <label className="block font-semibold text-blue-700 mb-1">Date</label>
           <input
             type="date"
             value={date}
             min={month ? `${month}-01` : ""}
             max={month ? `${month}-31` : ""}
             onChange={(e) => setDate(e.target.value)}
-            className="w-full p-2 border rounded"
+            className="w-full p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
             disabled={loading || !month}
           />
         </div>
 
-        {isFirstFiveDays() && fixedFields.map((cat) => (
+        {fixedFieldsToShow.map((cat) => (
           <div key={cat}>
             <label className="block capitalize font-medium">{cat}</label>
             <input
@@ -203,27 +294,85 @@ const DailyExpenseForm = ({ month }) => {
               value={dailyExpenses[cat] || ""}
               onChange={handleChange}
               min="0"
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
               disabled={loading}
             />
           </div>
         ))}
 
-        {categories.map((cat) => (
-          <div key={cat}>
-            <label className="block capitalize font-medium">{cat}</label>
-            <input
-              type="number"
-              name={cat}
-              value={dailyExpenses[cat] || ""}
-              onChange={handleChange}
-              min="0"
-              className="w-full p-2 border rounded"
-              disabled={loading}
-            />
-          </div>
-        ))}
-
+        {/* Grocery multi-input */}
+        <div>
+          <label className="block font-semibold mb-1">Grocery (multiple)</label>
+          {groceryEntries.map((entry, idx) => (
+            <div key={idx} className="flex items-center gap-2 mb-2">
+              <input
+                type="text"
+                placeholder="Label (e.g., Rice)"
+                value={entry.label}
+                onChange={(e) => handleGroceryChange(idx, "label", e.target.value)}
+                className="p-2 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+              />
+              <input
+                type="number"
+                placeholder="Amount"
+                value={entry.amount}
+                onChange={(e) => handleGroceryChange(idx, "amount", e.target.value)}
+                className="p-2 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+              />
+              <button
+                type="button"
+                onClick={() => removeGroceryEntry(idx)}
+                className="text-red-500 font-bold"
+              >
+                &times;
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={addGroceryEntry}
+            className="mt-1 px-3 py-1 cursor-pointer bg-blue-500 text-white rounded"
+          >
+            + Add Another
+          </button>
+        </div>
+        {/* Transport multi-input */}
+        <div>
+          <label className="block font-semibold mb-1">Transport (multiple)</label>
+          {transportEntries.map((entry, idx) => (
+            <div key={idx} className="flex items-center gap-2 mb-2">
+              <input
+                type="text"
+                placeholder="Label (e.g., Bus Fare)"
+                value={entry.label}
+                onChange={(e) => handleTransportChange(idx, "label", e.target.value)}
+                className="p-2 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+              />
+              <input
+                type="number"
+                placeholder="Amount"
+                value={entry.amount}
+                onChange={(e) => handleTransportChange(idx, "amount", e.target.value)}
+                className="p-2 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+              />
+              <button
+                type="button"
+                onClick={() => removeTransportEntry(idx)}
+                className="text-red-500 font-bold"
+              >
+                &times;
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={addTransportEntry}
+            className="mt-1 px-3 py-1 cursor-pointer bg-blue-500 text-white rounded"
+          >
+            + Add Another
+          </button>
+        </div>
+        {/* Other Expenses multi-input */}
         <div>
           <label className="block font-semibold mb-1">Other Expenses (multiple)</label>
           {otherEntries.map((entry, idx) => (
@@ -233,14 +382,14 @@ const DailyExpenseForm = ({ month }) => {
                 placeholder="Label (e.g., Fruits)"
                 value={entry.label}
                 onChange={(e) => handleOtherChange(idx, "label", e.target.value)}
-                className="p-2 border rounded w-1/2"
+                className="p-2 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
               />
               <input
                 type="number"
                 placeholder="Amount"
                 value={entry.amount}
                 onChange={(e) => handleOtherChange(idx, "amount", e.target.value)}
-                className="p-2 border rounded w-1/3"
+                className="p-2 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
               />
               <button
                 type="button"
@@ -254,7 +403,7 @@ const DailyExpenseForm = ({ month }) => {
           <button
             type="button"
             onClick={addOtherEntry}
-            className="mt-1 px-3 py-1 bg-blue-500 text-white rounded"
+            className="mt-1 px-3 py-1 cursor-pointer bg-blue-500 text-white rounded"
           >
             + Add Another
           </button>
@@ -263,9 +412,7 @@ const DailyExpenseForm = ({ month }) => {
         <button
           type="submit"
           disabled={loading}
-          className={`w-full p-2 rounded text-white ${
-            loading ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
-          }`}
+          className={`w-full py-3 rounded-xl cursor-pointer text-white font-bold shadow-md transition bg-gradient-to-r from-green-600 to-green-400 hover:from-green-800 hover:to-green-600 ${loading ? "opacity-60 cursor-not-allowed" : ""}`}
         >
           {loading ? "Saving..." : "Save Daily Expenses"}
         </button>

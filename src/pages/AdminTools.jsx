@@ -62,7 +62,7 @@ export default function AdminTools() {
           type="month"
           value={month}
           onChange={(e) => setMonth(e.target.value)}
-          className="block w-full border rounded p-2 mt-1"
+          className="block w-full p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
           disabled={running}
         />
       </label>
@@ -70,9 +70,7 @@ export default function AdminTools() {
       <button
         onClick={handleMigration}
         disabled={running || !month}
-        className={`w-full mt-4 py-2 rounded text-white ${
-          running ? "bg-gray-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"
-        }`}
+        className={`py-2 px-4 rounded-xl text-white font-bold shadow-md transition bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600`}
       >
         {running ? "Migrating..." : "Migrate Old 'Other' Entries"}
       </button>

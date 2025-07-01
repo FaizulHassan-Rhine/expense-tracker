@@ -10,14 +10,14 @@ export default function DailyExpense() {
   return (
     <div className="container mx-auto p-4 mt-20 space-2-6">
       <h2 className="text-xl font-bold text-center text-blue-600">Daily Expenses</h2>
-      <div>
+      <div className="max-w-4xl mx-auto">
         <label className="block font-medium mb-1">Select Month (e.g., 2025-06)</label>
         <input
           type="text"
           value={selectedMonth}
           onChange={(e) => setSelectedMonth(e.target.value)}
           placeholder="2025-06"
-          className="w-full p-2 border rounded "
+          className="w-full p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
         />
       </div>
 

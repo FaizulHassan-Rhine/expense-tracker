@@ -23,18 +23,18 @@ const AdminLogin = () => {
         <input
           type="text"
           placeholder="Username"
-          className="w-full border rounded p-2"
+          className="w-full p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
         />
         <input
           type="password"
           placeholder="Password"
-          className="w-full border rounded p-2"
+          className="w-full p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button type="submit" className="w-full bg-blue-600 text-white p-2 rounded">
+        <button type="submit" className={`w-full py-3 rounded-xl text-white font-bold shadow-md transition bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600`}>
           Login
         </button>
       </form>
