@@ -71,7 +71,7 @@ const AdminPanel = () => {
   };
 
   return (
-    <div className="container mx-auto mt-20 p-6 bg-white shadow rounded">
+    <div className="container mx-auto mt-10 sm:mt-20 p-4 sm:p-6 bg-white shadow rounded">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-blue-700">Admin Panel</h2>
         <button
@@ -90,7 +90,7 @@ const AdminPanel = () => {
         <select
           value={selectedMonth}
           onChange={(e) => loadMonthData(e.target.value)}
-          className="block w-full p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+          className="block w-full p-2 sm:p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
         >
           <option value="">-- Select Month --</option>
           {months.map((m) => (
@@ -111,7 +111,7 @@ const AdminPanel = () => {
             </button>
           </div>
 
-          <ul className="space-y-2 max-h-96 overflow-y-auto text-sm">
+          <ul className="space-y-2 max-h-96 overflow-y-auto text-xs sm:text-sm">
             {Object.entries(days).map(([date, data]) => (
               <li key={date} className="border p-3 rounded">
                 <div className="flex justify-between items-center mb-2">
@@ -142,7 +142,7 @@ const AdminPanel = () => {
                     </button>
                   </div>
                 </div>
-                <pre className="text-xs bg-gray-50 p-2 rounded overflow-auto max-h-40">{JSON.stringify(data, null, 2)}</pre>
+                <pre className="text-xs sm:text-xs bg-gray-50 p-2 rounded overflow-auto max-h-40">{JSON.stringify(data, null, 2)}</pre>
               </li>
             ))}
           </ul>
@@ -150,7 +150,7 @@ const AdminPanel = () => {
           <div className="text-right mt-4">
             <button
               onClick={exportCSV}
-              className="py-2 px-4 rounded-xl text-white font-bold shadow-md transition bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+              className="py-2 px-4 rounded-xl text-white font-bold shadow-md transition bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 w-full sm:w-auto"
             >
               Export to CSV
             </button>

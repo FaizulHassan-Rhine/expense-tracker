@@ -53,16 +53,16 @@ export default function AdminTools() {
   };
 
   return (
-    <div className="container mx-auto bg-white shadow p-6 mt-20 rounded">
+    <div className="container mx-auto bg-white shadow p-4 sm:p-6 mt-10 sm:mt-20 rounded">
       <h2 className="text-xl font-bold mb-4 text-blue-700">Admin Tools: Migrate Legacy Expenses</h2>
 
-      <label className="block mb-2 font-medium">
+      <label className="block mb-2 font-medium text-sm sm:text-base">
         Select Month:
         <input
           type="month"
           value={month}
           onChange={(e) => setMonth(e.target.value)}
-          className="block w-full p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+          className="block w-full p-2 sm:p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
           disabled={running}
         />
       </label>
@@ -70,7 +70,7 @@ export default function AdminTools() {
       <button
         onClick={handleMigration}
         disabled={running || !month}
-        className={`py-2 px-4 rounded-xl text-white font-bold shadow-md transition bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600`}
+        className={`py-2 sm:py-3 px-4 rounded-xl text-white font-bold shadow-md transition bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 w-full sm:w-auto`}
       >
         {running ? "Migrating..." : "Migrate Old 'Other' Entries"}
       </button>

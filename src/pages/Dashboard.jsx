@@ -19,7 +19,7 @@ import {
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
-const fixedCategories = ["houseRent", "internet"];
+const fixedCategories = ["houseRent", "savings", "internet", "electricity"];
 const normalCategories = ["transport", "grocery"];
 const categories = [...fixedCategories, ...normalCategories, "other"];
 const COLORS = ["#6366F1", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6"];
@@ -87,32 +87,36 @@ const Dashboard = () => {
 
   // Use filteredEntries for all calculations below:
   const dailyData = filteredEntries.map(([date, data]) => {
-    const totalFixed = [...fixedCategories, ...normalCategories].reduce(
-      (acc, c) => acc + (parseInt(data[c]) || 0),
-      0
-    );
-    const totalOther = data.other
-      ? Object.values(data.other).reduce((sum, v) => sum + (parseInt(v) || 0), 0)
-      : 0;
+    const total = categories.reduce((acc, cat) => {
+      if (data[cat] && typeof data[cat] === 'object') {
+        return acc + Object.values(data[cat]).reduce((sum, v) => sum + (parseInt(v) || 0), 0);
+      }
+      return acc + (parseInt(data[cat]) || 0);
+    }, 0);
     return {
       date: date.slice(8),
-      total: totalFixed + totalOther,
+      total,
     };
   });
 
   const categoryTotals = categories.map((cat) => ({
     name: cat,
     value: filteredEntries.reduce((acc, [, d]) => {
-      if (cat === "other") {
-        return acc + (d.other
-          ? Object.values(d.other).reduce((sum, v) => sum + (parseInt(v) || 0), 0)
-          : 0);
+      if (d[cat] && typeof d[cat] === 'object') {
+        return acc + Object.values(d[cat]).reduce((sum, v) => sum + (parseInt(v) || 0), 0);
       }
       return acc + (parseInt(d[cat]) || 0);
     }, 0),
   }));
 
-  const totalSpent = categoryTotals.reduce((sum, c) => sum + c.value, 0);
+  const totalSpent = filteredEntries.reduce((sum, [, d]) => {
+    return sum + categories.reduce((catSum, cat) => {
+      if (d[cat] && typeof d[cat] === 'object') {
+        return catSum + Object.values(d[cat]).reduce((s, v) => s + (parseInt(v) || 0), 0);
+      }
+      return catSum + (parseInt(d[cat]) || 0);
+    }, 0);
+  }, 0);
 
   // For recurring expenses, use filteredEntries as well
   const recurringMap = {};
@@ -150,69 +154,58 @@ const Dashboard = () => {
     });
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 container mx-auto py-6">
+    <div className="px-2 sm:px-4 lg:px-8 container mx-auto py-4 sm:py-6">
       <h2 className="text-3xl font-extrabold bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-transparent bg-clip-text mb-6">
         📊 Expense Dashboard
       </h2>
 
-      <div className="flex flex-wrap gap-4 mb-6 items-end">
-        <div>
-          <label className="text-sm font-medium">Month</label>
-          <input
-            type="month"
-            value={month}
-            onChange={(e) => setMonth(e.target.value)}
-            className="block w-full p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-            disabled={loading}
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium">Start Date</label>
-          <DatePicker
-            selected={weekRange.start}
-            onChange={(date) => setWeekRange({ ...weekRange, start: date })}
-            className="block w-full p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-            dateFormat="yyyy-MM-dd"
-            placeholderText="Start date"
-            withPortal
-            popperClassName="custom-datepicker-popper"
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium">End Date</label>
-          <DatePicker
-            selected={weekRange.end}
-            onChange={(date) => setWeekRange({ ...weekRange, end: date })}
-            className="block w-full p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-            dateFormat="yyyy-MM-dd"
-            placeholderText="End date"
-            withPortal
-            popperClassName="custom-datepicker-popper"
-          />
-        </div>
+      <div className="w-full max-w-xs mx-auto bg-white rounded-xl shadow-lg p-4 mt-4 mb-4">
+        <label className="block mb-2 font-semibold text-blue-700 text-sm">Month</label>
+        <input
+          type="month"
+          value={month}
+          onChange={(e) => setMonth(e.target.value)}
+          className="w-full mb-4 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+          disabled={loading}
+        />
+        <label className="block mb-2 font-semibold text-blue-700 text-sm">Start Date</label>
+        <DatePicker
+          selected={weekRange.start}
+          onChange={(date) => setWeekRange({ ...weekRange, start: date })}
+          className="w-full mb-4 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+          dateFormat="yyyy-MM-dd"
+          placeholderText="Start date"
+          withPortal
+          popperClassName="custom-datepicker-popper"
+        />
+        <label className="block mb-2 font-semibold text-blue-700 text-sm">End Date</label>
+        <DatePicker
+          selected={weekRange.end}
+          onChange={(date) => setWeekRange({ ...weekRange, end: date })}
+          className="w-full mb-4 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+          dateFormat="yyyy-MM-dd"
+          placeholderText="End date"
+          withPortal
+          popperClassName="custom-datepicker-popper"
+        />
       </div>
 
-      <div className="sticky top-16 z-20 bg-white shadow-md rounded-xl mb-6 flex flex-wrap justifyleftt items-center p-4 gap-4">
-        <div className="flex items-center gap-2 bg-green-200 p-2 rounded-xl">
-          <span cassName="text-2xl">💰</span>
-          <div > 
-            <div className="text-xs text-gray-500">Total Budget</div>
-            <div className="text-lg font-bold text-green-600">{summary?.totalBudget ?? '--'} Tk</div>
-          </div>
+      {/* Modern, beautiful summary cards for mobile/desktop */}
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 items-center justify-center w-full my-4">
+        <div className="flex-1 w-full bg-gradient-to-r from-green-100 to-green-200 rounded-2xl shadow-lg flex items-center justify-between px-4 py-3">
+          <span className="text-2xl">💰</span>
+          <span className="text-lg font-bold text-green-700">{summary?.totalBudget ?? '--'} Tk</span>
+          <span className="text-xs text-gray-500">Total Budget</span>
         </div>
-        <div className="flex items-center gap-2 bg-red-200 p-2 rounded-xl">
+        <div className="flex-1 w-full bg-gradient-to-r from-red-100 to-red-200 rounded-2xl shadow-lg flex items-center justify-between px-4 py-3">
           <span className="text-2xl">💸</span>
-          <div>
-            <div className="text-xs text-gray-500">Total Spent</div>
-            <div className="text-lg font-bold text-red-600">{totalSpent ?? '--'} Tk</div>
-          </div>
+          <span className="text-lg font-bold text-red-700">{totalSpent ?? '--'} Tk</span>
+          <span className="text-xs text-gray-500">Total Spent</span>
         </div>
-        <div className="flex items-center gap-2 bg-yellow-100 p-2 rounded-xl">
-          <span className="text-2xl">🟢</span>
-          <div>
-            <div className="text-xs text-gray-500">Remaining</div>
-            <div className={`text-lg font-bold ${summary && summary.totalBudget - totalSpent < 0 ? 'text-red-600' : 'text-green-700'}`}>{summary ? summary.totalBudget - totalSpent : '--'} Tk</div>
-          </div>
+        <div className="flex-1 w-full bg-gradient-to-r from-yellow-100 to-green-100 rounded-2xl shadow-lg flex items-center justify-between px-4 py-3">
+          <span className="text-2xl">��</span>
+          <span className="text-lg font-bold text-green-700">{summary ? summary.totalBudget - totalSpent : '--'} Tk</span>
+          <span className="text-xs text-gray-500">Remaining</span>
         </div>
       </div>
 
@@ -236,7 +229,7 @@ const Dashboard = () => {
         </div>
       )}
 
-     <div className="flex justify-between mb-6">
+     <div className="flex flex-col sm:flex-row gap-4 flex-wrap mb-6 items-center">
      {filteredEntries.length > 0 && (
         <div className="mb-6">
           <div className="font-semibold mb-2">🔥 Top 3 Spending Days</div>
@@ -244,7 +237,12 @@ const Dashboard = () => {
             {filteredEntries
               .map(([date, data]) => ({
                 date,
-                total: [...fixedCategories, ...normalCategories].reduce((acc, c) => acc + (parseInt(data[c]) || 0), 0) + (data.other ? Object.values(data.other).reduce((sum, v) => sum + (parseInt(v) || 0), 0) : 0)
+                total: categories.reduce((acc, cat) => {
+                  if (data[cat] && typeof data[cat] === 'object') {
+                    return acc + Object.values(data[cat]).reduce((sum, v) => sum + (parseInt(v) || 0), 0);
+                  }
+                  return acc + (parseInt(data[cat]) || 0);
+                }, 0)
               }))
               .sort((a, b) => b.total - a.total)
               .slice(0, 3)
@@ -258,26 +256,36 @@ const Dashboard = () => {
         </div>
       )}
 
-      {categoryTotals.length > 0 && (
+      {summary && (
         <div className="mb-6">
-          <div className="font-semibold mb-2">🏆 Top 3 Categories</div>
-          <div className="flex gap-4 flex-wrap">
-            {categoryTotals
-              .filter(c => c.name !== 'other')
-              .sort((a, b) => b.value - a.value)
-              .slice(0, 3)
-              .map((c, i) => (
-                <div key={c.name} className="p-3 bg-white rounded-xl shadow border flex flex-col items-center min-w-[120px]">
-                  <div className="text-lg font-bold" style={{ color: COLORS[i % COLORS.length] }}>{c.value} Tk</div>
-                  <div className="text-xs text-gray-500 capitalize">{c.name}</div>
+          <div className="font-semibold mb-2">📊 Category Budgets & Remaining</div>
+          <div className="flex flex-col sm:flex-row gap-4 flex-wrap">
+            {categories.filter(c => c !== 'other').map((cat) => {
+              // Get budget for this category from summary
+              const budget = parseInt(summary[cat]) || 0;
+              // Get spent for this category from filteredEntries
+              const spent = filteredEntries.reduce((acc, [, d]) => {
+                if (d[cat] && typeof d[cat] === 'object') {
+                  return acc + Object.values(d[cat]).reduce((sum, v) => sum + (parseInt(v) || 0), 0);
+                }
+                return acc + (parseInt(d[cat]) || 0);
+              }, 0);
+              const remaining = budget - spent;
+              return (
+                <div key={cat} className="p-3 bg-white rounded-xl shadow border flex flex-col items-center min-w-[140px]">
+                  <div className="text-xs text-gray-500 capitalize mb-1">{cat}</div>
+                  <div className="text-sm">Budget: <span className="font-bold text-blue-700">{budget} Tk</span></div>
+                  <div className="text-sm">Spent: <span className="font-bold text-red-600">{spent} Tk</span></div>
+                  <div className="text-sm">Remaining: <span className={`font-bold ${remaining < 0 ? 'text-red-600' : 'text-green-700'}`}>{remaining} Tk</span></div>
                 </div>
-              ))}
+              );
+            })}
           </div>
         </div>
       )}
      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
         <div className="p-4 bg-white rounded-xl shadow">
           <h4 className="font-semibold mb-2">📊 Daily Expenses (Bar)</h4>
           <ResponsiveContainer width="100%" height={300}>
@@ -337,7 +345,12 @@ const Dashboard = () => {
                 }
                 return data[cat] || 0;
               });
-              const total = [...fixedCategories, ...normalCategories].reduce((acc, c) => acc + (parseInt(data[c]) || 0), 0) + (data.other ? Object.values(data.other).reduce((sum, v) => sum + (parseInt(v) || 0), 0) : 0);
+              const total = categories.reduce((acc, cat) => {
+                if (data[cat] && typeof data[cat] === 'object') {
+                  return acc + Object.values(data[cat]).reduce((sum, v) => sum + (parseInt(v) || 0), 0);
+                }
+                return acc + (parseInt(data[cat]) || 0);
+              }, 0);
               csv += `${date},${row.join(',')},${total}\n`;
             });
             const blob = new Blob([csv], { type: 'text/csv' });
@@ -355,7 +368,7 @@ const Dashboard = () => {
       {filteredEntries.length > 0 && (
         <div className="mb-10 overflow-x-auto">
           <div className="font-semibold mb-2">📅 Daily Breakdown</div>
-          <table className="min-w-full bg-white rounded-xl shadow overflow-hidden">
+          <table className="min-w-full bg-white rounded-xl shadow overflow-x-auto text-xs sm:text-sm">
             <thead className="bg-gray-100">
               <tr>
                 <th className="p-2 text-left">Date</th>
@@ -367,17 +380,24 @@ const Dashboard = () => {
             </thead>
             <tbody>
               {filteredEntries.map(([date, data]) => {
-                const total = [...fixedCategories, ...normalCategories].reduce((acc, c) => acc + (parseInt(data[c]) || 0), 0) + (data.other ? Object.values(data.other).reduce((sum, v) => sum + (parseInt(v) || 0), 0) : 0);
+                const total = categories.reduce((acc, cat) => {
+                  if (data[cat] && typeof data[cat] === 'object') {
+                    return acc + Object.values(data[cat]).reduce((sum, v) => sum + (parseInt(v) || 0), 0);
+                  }
+                  return acc + (parseInt(data[cat]) || 0);
+                }, 0);
                 return (
                   <tr key={date} className="border-b hover:bg-gray-50">
                     <td className="p-2 font-mono text-xs">{date}</td>
                     {categories.map(cat => (
                       <td key={cat} className="p-2">
-                        {cat === 'other' && data.other && typeof data.other === 'object' ? (
+                        {(cat === 'other' || cat === 'grocery' || cat === 'transport') && data[cat] && typeof data[cat] === 'object' ? (
                           <details>
-                            <summary className="cursor-pointer text-blue-600">{Object.values(data.other).reduce((sum, v) => sum + (parseInt(v) || 0), 0)} Tk</summary>
+                            <summary className="cursor-pointer text-blue-600">
+                              {Object.values(data[cat]).reduce((sum, v) => sum + (parseInt(v) || 0), 0)} Tk
+                            </summary>
                             <ul className="ml-4 text-xs">
-                              {Object.entries(data.other).map(([label, value], idx) => (
+                              {Object.entries(data[cat]).map(([label, value], idx) => (
                                 <li key={idx}>{label}: {value} Tk</li>
                               ))}
                             </ul>
@@ -401,7 +421,7 @@ const Dashboard = () => {
         {recurringExpenses.length === 0 ? (
           <p className="text-gray-500">No recurring expenses detected.</p>
         ) : (
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 flex-wrap">
             {recurringExpenses.map((item, idx) => (
               <div key={idx} className="p-4 bg-white rounded-xl shadow border min-w-[200px]">
                 <div className="font-bold text-blue-700">{item.label}</div>

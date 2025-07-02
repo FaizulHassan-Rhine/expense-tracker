@@ -17,24 +17,24 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="max-w-sm mx-auto mt-20 p-6 bg-white shadow rounded">
+    <div className="max-w-full sm:max-w-sm mx-auto mt-10 sm:mt-20 p-4 sm:p-6 bg-white shadow rounded">
       <h2 className="text-xl font-bold mb-4 text-center">Admin Login</h2>
-      <form onSubmit={handleLogin} className="space-y-4">
+      <form onSubmit={handleLogin} className="space-y-3 sm:space-y-4">
         <input
           type="text"
           placeholder="Username"
-          className="w-full p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+          className="w-full p-2 sm:p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
         />
         <input
           type="password"
           placeholder="Password"
-          className="w-full p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+          className="w-full p-2 sm:p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button type="submit" className={`w-full py-3 rounded-xl text-white font-bold shadow-md transition bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600`}>
+        <button type="submit" className={`w-full py-2 sm:py-3 rounded-xl text-white font-bold shadow-md transition bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600`}>
           Login
         </button>
       </form>

@@ -62,7 +62,20 @@ export default function ExpenseSummary({ month }) {
               <ul className="ml-4 list-disc">
                 {allCategories.map((cat) => (
                   <li key={cat}>
-                    {cat.charAt(0).toUpperCase() + cat.slice(1)}: {data[cat] || 0} Tk
+                    {cat.charAt(0).toUpperCase() + cat.slice(1)}: {typeof data[cat] === 'object' && data[cat] !== null ? (
+                      <details>
+                        <summary className="cursor-pointer text-blue-600">
+                          {Object.values(data[cat]).reduce((sum, v) => sum + (parseInt(v) || 0), 0)} Tk
+                        </summary>
+                        <ul className="ml-4 list-disc text-gray-700">
+                          {Object.entries(data[cat]).map(([label, value], idx) => (
+                            <li key={idx}>{label}: {value} Tk</li>
+                          ))}
+                        </ul>
+                      </details>
+                    ) : (
+                      `${data[cat] || 0} Tk`
+                    )}
                   </li>
                 ))}
                 {data.other && typeof data.other === "object" && (
