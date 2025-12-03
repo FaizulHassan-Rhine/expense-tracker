@@ -16,13 +16,29 @@ import {
   Line,
   ResponsiveContainer,
 } from "recharts";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { Label } from "../components/ui/label";
+import { Button } from "../components/ui/button";
+import { Badge } from "../components/ui/badge";
+import { DatePicker } from "../components/ui/date-picker";
+import { MonthPicker } from "../components/ui/month-picker";
+import { TrendingUp, TrendingDown, Wallet, Download, Calendar, BarChart3, PieChart as PieChartIcon, LineChart as LineChartIcon, DollarSign, ArrowUpRight, ArrowDownRight, Coins, Receipt } from "lucide-react";
 
 const fixedCategories = ["houseRent", "savings", "internet", "electricity"];
 const normalCategories = ["transport", "grocery"];
 const categories = [...fixedCategories, ...normalCategories, "other"];
-const COLORS = ["#6366F1", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6"];
+const COLORS = [
+  "#6366F1", // Indigo
+  "#10B981", // Emerald
+  "#F59E0B", // Amber
+  "#EF4444", // Red
+  "#8B5CF6", // Violet
+  "#06B6D4", // Cyan
+  "#F97316", // Orange
+  "#84CC16", // Lime
+  "#EC4899", // Pink
+  "#14B8A6", // Teal
+];
 
 const Dashboard = () => {
   const [month, setMonth] = useState("");
@@ -155,187 +171,354 @@ const Dashboard = () => {
 
   return (
     <div className="px-2 sm:px-4 lg:px-8 container mx-auto py-4 sm:py-6">
-      <h2 className="text-3xl font-extrabold bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-transparent bg-clip-text mb-6">
-        📊 Expense Dashboard
-      </h2>
-
-      <div className="w-full max-w-xs mx-auto bg-white rounded-xl shadow-lg p-4 mt-4 mb-4">
-        <label className="block mb-2 font-semibold text-blue-700 text-sm">Month</label>
-        <input
-          type="month"
-          value={month}
-          onChange={(e) => setMonth(e.target.value)}
-          className="w-full mb-4 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-          disabled={loading}
-        />
-        <label className="block mb-2 font-semibold text-blue-700 text-sm">Start Date</label>
-        <DatePicker
-          selected={weekRange.start}
-          onChange={(date) => setWeekRange({ ...weekRange, start: date })}
-          className="w-full mb-4 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-          dateFormat="yyyy-MM-dd"
-          placeholderText="Start date"
-          withPortal
-          popperClassName="custom-datepicker-popper"
-        />
-        <label className="block mb-2 font-semibold text-blue-700 text-sm">End Date</label>
-        <DatePicker
-          selected={weekRange.end}
-          onChange={(date) => setWeekRange({ ...weekRange, end: date })}
-          className="w-full mb-4 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-          dateFormat="yyyy-MM-dd"
-          placeholderText="End date"
-          withPortal
-          popperClassName="custom-datepicker-popper"
-        />
+      <div className="flex items-center gap-2 mb-6">
+        <BarChart3 className="h-8 w-8 text-primary" />
+        <h2 className="text-3xl font-bold">Expense Dashboard</h2>
       </div>
 
-      {/* Modern, beautiful summary cards for mobile/desktop */}
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 items-center justify-center w-full my-4">
-        <div className="flex-1 w-full bg-gradient-to-r from-green-100 to-green-200 rounded-2xl shadow-lg flex items-center justify-between px-4 py-3">
-          <span className="text-2xl">💰</span>
-          <span className="text-lg font-bold text-green-700">{summary?.totalBudget ?? '--'} Tk</span>
-          <span className="text-xs text-gray-500">Total Budget</span>
-        </div>
-        <div className="flex-1 w-full bg-gradient-to-r from-red-100 to-red-200 rounded-2xl shadow-lg flex items-center justify-between px-4 py-3">
-          <span className="text-2xl">💸</span>
-          <span className="text-lg font-bold text-red-700">{totalSpent ?? '--'} Tk</span>
-          <span className="text-xs text-gray-500">Total Spent</span>
-        </div>
-        <div className="flex-1 w-full bg-gradient-to-r from-yellow-100 to-green-100 rounded-2xl shadow-lg flex items-center justify-between px-4 py-3">
+      <Card className="w-full max-w-lg mx-auto mb-8 shadow-lg">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <Calendar className="h-5 w-5 text-primary" />
+            Filter Options
+          </CardTitle>
+          <CardDescription>
+            Select a month and date range to view your expenses
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="month" className="text-sm font-medium">Month</Label>
+            <MonthPicker
+              value={month}
+              onChange={setMonth}
+              placeholder="Select month"
+              disabled={loading}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Start Date</Label>
+              <DatePicker
+                date={weekRange.start}
+                onSelect={(date) => setWeekRange({ ...weekRange, start: date })}
+                placeholder="Start date"
+                disabled={loading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">End Date</Label>
+              <DatePicker
+                date={weekRange.end}
+                onSelect={(date) => setWeekRange({ ...weekRange, end: date })}
+                placeholder="End date"
+                disabled={loading}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <Card className="relative overflow-hidden border-l-4 border-l-primary shadow-lg hover:shadow-xl transition-all duration-300">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16"></div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Budget</CardTitle>
+            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20">
+              <Coins className="h-6 w-6 text-primary" />
+            </div>
+          </CardHeader>
+          <CardContent className="relative z-10">
+            <div className="text-3xl font-bold mb-1">{summary?.totalBudget?.toLocaleString() ?? '--'} Tk</div>
+            <p className="text-xs text-muted-foreground">Allocated for this month</p>
+          </CardContent>
+        </Card>
+        <Card className="relative overflow-hidden border-l-4 border-l-destructive shadow-lg hover:shadow-xl transition-all duration-300">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-destructive/5 rounded-full -mr-16 -mt-16"></div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Spent</CardTitle>
+            <div className="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center border-2 border-destructive/20">
+              <Receipt className="h-6 w-6 text-destructive" />
+            </div>
+          </CardHeader>
+          <CardContent className="relative z-10">
+            <div className="text-3xl font-bold text-destructive mb-1">{totalSpent?.toLocaleString() ?? '--'} Tk</div>
+            <p className="text-xs text-muted-foreground">Expenses incurred</p>
+          </CardContent>
+        </Card>
+        <Card className={`relative overflow-hidden border-l-4 shadow-lg hover:shadow-xl transition-all duration-300 ${summary && (summary.totalBudget - totalSpent) < 0 ? 'border-l-destructive' : 'border-l-primary'}`}>
+          <div className={`absolute top-0 right-0 w-32 h-32 rounded-full -mr-16 -mt-16 ${summary && (summary.totalBudget - totalSpent) < 0 ? 'bg-destructive/5' : 'bg-primary/5'}`}></div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Remaining</CardTitle>
+            <div className={`h-12 w-12 rounded-full flex items-center justify-center border-2 ${summary && (summary.totalBudget - totalSpent) < 0 ? 'bg-destructive/10 border-destructive/20' : 'bg-primary/10 border-primary/20'}`}>
+              {summary && (summary.totalBudget - totalSpent) < 0 ? (
+                <TrendingDown className="h-6 w-6 text-destructive" />
+              ) : (
+                <TrendingUp className="h-6 w-6 text-primary" />
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="relative z-10">
+            <div className={`text-3xl font-bold mb-1 ${summary && (summary.totalBudget - totalSpent) < 0 ? 'text-destructive' : 'text-primary'}`}>
+              {summary ? (summary.totalBudget - totalSpent).toLocaleString() : '--'} Tk
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {summary && (summary.totalBudget - totalSpent) < 0 ? 'Over budget' : 'Available balance'}
+            </p>
+          </CardContent>
+        </Card>
           <span className="text-2xl">��</span>
-          <span className="text-lg font-bold text-green-700">{summary ? summary.totalBudget - totalSpent : '--'} Tk</span>
-          <span className="text-xs text-gray-500">Remaining</span>
-        </div>
       </div>
 
       {monthlyComparisons.length > 1 && (
-        <div className="mb-6 p-4 bg-gradient-to-r from-indigo-100 to-pink-100 rounded-xl shadow flex flex-col sm:flex-row gap-4 items-center justify-between">
-          <div className="font-semibold text-lg">📅 This Month vs Last Month</div>
-          <div className="flex gap-8">
-            <div>
-              <div className="text-xs text-gray-500">This Month</div>
-              <div className="font-bold text-blue-700">{monthlyComparisons[monthlyComparisons.length-1].spent} Tk</div>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>This Month vs Last Month</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col sm:flex-row gap-6 items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">This Month</p>
+                <p className="text-2xl font-bold">{monthlyComparisons[monthlyComparisons.length-1].spent.toLocaleString()} Tk</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Last Month</p>
+                <p className="text-2xl font-bold">{monthlyComparisons[monthlyComparisons.length-2].spent.toLocaleString()} Tk</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Change</p>
+                <p className={`text-2xl font-bold ${monthlyComparisons[monthlyComparisons.length-1].spent - monthlyComparisons[monthlyComparisons.length-2].spent >= 0 ? 'text-destructive' : 'text-primary'}`}>
+                  {monthlyComparisons[monthlyComparisons.length-1].spent - monthlyComparisons[monthlyComparisons.length-2].spent >= 0 ? '+' : ''}
+                  {(monthlyComparisons[monthlyComparisons.length-1].spent - monthlyComparisons[monthlyComparisons.length-2].spent).toLocaleString()} Tk
+                </p>
+              </div>
             </div>
-            <div>
-              <div className="text-xs text-gray-500">Last Month</div>
-              <div className="font-bold text-purple-700">{monthlyComparisons[monthlyComparisons.length-2].spent} Tk</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500">Change</div>
-              <div className={`font-bold ${monthlyComparisons[monthlyComparisons.length-1].spent - monthlyComparisons[monthlyComparisons.length-2].spent >= 0 ? 'text-red-600' : 'text-green-600'}`}>{monthlyComparisons[monthlyComparisons.length-1].spent - monthlyComparisons[monthlyComparisons.length-2].spent} Tk</div>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
-     <div className="flex flex-col sm:flex-row gap-4 flex-wrap mb-6 items-center">
-     {filteredEntries.length > 0 && (
-        <div className="mb-6">
-          <div className="font-semibold mb-2">🔥 Top 3 Spending Days</div>
-          <div className="flex gap-4 flex-wrap">
-            {filteredEntries
-              .map(([date, data]) => ({
-                date,
-                total: categories.reduce((acc, cat) => {
-                  if (data[cat] && typeof data[cat] === 'object') {
-                    return acc + Object.values(data[cat]).reduce((sum, v) => sum + (parseInt(v) || 0), 0);
-                  }
-                  return acc + (parseInt(data[cat]) || 0);
-                }, 0)
-              }))
-              .sort((a, b) => b.total - a.total)
-              .slice(0, 3)
-              .map(({ date, total }) => (
-                <div key={date} className="p-3 bg-white rounded-xl shadow border flex flex-col items-center min-w-[120px]">
-                  <div className="text-lg font-bold text-red-600">{total} Tk</div>
-                  <div className="text-xs text-gray-500">{date}</div>
-                </div>
-              ))}
-          </div>
-        </div>
+      {filteredEntries.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Top 3 Spending Days</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-4 flex-wrap">
+              {filteredEntries
+                .map(([date, data]) => ({
+                  date,
+                  total: categories.reduce((acc, cat) => {
+                    if (data[cat] && typeof data[cat] === 'object') {
+                      return acc + Object.values(data[cat]).reduce((sum, v) => sum + (parseInt(v) || 0), 0);
+                    }
+                    return acc + (parseInt(data[cat]) || 0);
+                  }, 0)
+                }))
+                .sort((a, b) => b.total - a.total)
+                .slice(0, 3)
+                .map(({ date, total }) => (
+                  <Card key={date} className="min-w-[120px]">
+                    <CardContent className="pt-6">
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-destructive">{total.toLocaleString()} Tk</div>
+                        <div className="text-xs text-muted-foreground">{date}</div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {summary && (
-        <div className="mb-6">
-          <div className="font-semibold mb-2">📊 Category Budgets & Remaining</div>
-          <div className="flex flex-col sm:flex-row gap-4 flex-wrap">
-            {categories.filter(c => c !== 'other').map((cat) => {
-              // Get budget for this category from summary
-              const budget = parseInt(summary[cat]) || 0;
-              // Get spent for this category from filteredEntries
-              const spent = filteredEntries.reduce((acc, [, d]) => {
-                if (d[cat] && typeof d[cat] === 'object') {
-                  return acc + Object.values(d[cat]).reduce((sum, v) => sum + (parseInt(v) || 0), 0);
-                }
-                return acc + (parseInt(d[cat]) || 0);
-              }, 0);
-              const remaining = budget - spent;
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Category Budgets & Remaining</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {categories.filter(c => c !== 'other').map((cat) => {
+                const budget = parseInt(summary[cat]) || 0;
+                const spent = filteredEntries.reduce((acc, [, d]) => {
+                  if (d[cat] && typeof d[cat] === 'object') {
+                    return acc + Object.values(d[cat]).reduce((sum, v) => sum + (parseInt(v) || 0), 0);
+                  }
+                  return acc + (parseInt(d[cat]) || 0);
+                }, 0);
+                const remaining = budget - spent;
+                return (
+                  <Card key={cat}>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm capitalize">{cat.replace(/([A-Z])/g, " $1").trim()}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-1">
+                      <div className="text-xs text-muted-foreground">Budget</div>
+                      <div className="text-sm font-semibold">{budget.toLocaleString()} Tk</div>
+                      <div className="text-xs text-muted-foreground">Spent</div>
+                      <div className="text-sm font-semibold text-destructive">{spent.toLocaleString()} Tk</div>
+                      <div className="text-xs text-muted-foreground">Remaining</div>
+                      <div className={`text-sm font-semibold ${remaining < 0 ? 'text-destructive' : 'text-primary'}`}>
+                        {remaining.toLocaleString()} Tk
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Daily Expenses
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={dailyData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="total" fill="hsl(var(--primary))" animationDuration={1000} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <PieChartIcon className="h-5 w-5" />
+              Category Breakdown
+            </CardTitle>
+            <CardDescription>
+              Distribution of expenses by category
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {(() => {
+              const filteredCategories = categoryTotals.filter(item => item.value > 0);
+              const chartTotal = filteredCategories.reduce((sum, item) => sum + item.value, 0);
+              
+              if (filteredCategories.length === 0) {
+                return (
+                  <div className="flex items-center justify-center h-[280px] text-muted-foreground">
+                    <div className="text-center">
+                      <PieChartIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      <p>No expense data available</p>
+                    </div>
+                  </div>
+                );
+              }
+
               return (
-                <div key={cat} className="p-3 bg-white rounded-xl shadow border flex flex-col items-center min-w-[140px]">
-                  <div className="text-xs text-gray-500 capitalize mb-1">{cat}</div>
-                  <div className="text-sm">Budget: <span className="font-bold text-blue-700">{budget} Tk</span></div>
-                  <div className="text-sm">Spent: <span className="font-bold text-red-600">{spent} Tk</span></div>
-                  <div className="text-sm">Remaining: <span className={`font-bold ${remaining < 0 ? 'text-red-600' : 'text-green-700'}`}>{remaining} Tk</span></div>
+                <div className="space-y-4">
+                  <ResponsiveContainer width="100%" height={280}>
+                    <PieChart>
+                      <Pie
+                        data={filteredCategories}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={100}
+                        paddingAngle={4}
+                        dataKey="value"
+                        stroke="hsl(var(--background))"
+                        strokeWidth={2}
+                        animationDuration={800}
+                      >
+                        {filteredCategories.map((entry, index) => (
+                          <Cell 
+                            key={`cell-${entry.name}`} 
+                            fill={COLORS[index % COLORS.length]} 
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{
+                          backgroundColor: "hsl(var(--card))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "6px",
+                          padding: "8px 12px",
+                          boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                        }}
+                        formatter={(value, name) => {
+                          const displayName = name.charAt(0).toUpperCase() + 
+                            name.slice(1).replace(/([A-Z])/g, " $1");
+                          const percentage = chartTotal > 0 
+                            ? ((value / chartTotal) * 100).toFixed(1) 
+                            : 0;
+                          return [
+                            `${value.toLocaleString()} Tk (${percentage}%)`,
+                            displayName
+                          ];
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-4 border-t border-border">
+                    {filteredCategories.map((entry, index) => {
+                      const percentage = chartTotal > 0 
+                        ? ((entry.value / chartTotal) * 100).toFixed(1) 
+                        : 0;
+                      const displayName = entry.name.charAt(0).toUpperCase() + 
+                        entry.name.slice(1).replace(/([A-Z])/g, " $1");
+                      return (
+                        <div 
+                          key={entry.name} 
+                          className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50 transition-colors cursor-pointer"
+                        >
+                          <div 
+                            className="w-3 h-3 rounded-full flex-shrink-0 shadow-sm" 
+                            style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium truncate">{displayName}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {entry.value.toLocaleString()} Tk
+                            </div>
+                            <div className="text-xs font-semibold text-primary">
+                              {percentage}%
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               );
-            })}
-          </div>
-        </div>
-      )}
-     </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
-        <div className="p-4 bg-white rounded-xl shadow">
-          <h4 className="font-semibold mb-2">📊 Daily Expenses (Bar)</h4>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={dailyData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="total" fill="#6366F1" animationDuration={1000} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="p-4 bg-white rounded-xl shadow">
-          <h4 className="font-semibold mb-2">🍕 Category Breakdown (Pie)</h4>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={categoryTotals}
-                cx="50%"
-                cy="50%"
-                innerRadius={50}
-                outerRadius={90}
-                paddingAngle={3}
-                dataKey="value"
-                label={({ name, value }) => `${name}: ${value} Tk`}
-              >
-                {categoryTotals.map((entry, index) => (
-                  <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="col-span-full p-4 bg-white rounded-xl shadow">
-          <h4 className="font-semibold mb-2">📈 Spending Trend (Line)</h4>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={dailyData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Line type="monotone" dataKey="total" stroke="#10B981" strokeWidth={3} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+            })()}
+          </CardContent>
+        </Card>
+        <Card className="col-span-full">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <LineChartIcon className="h-5 w-5" />
+              Spending Trend
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={dailyData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Line type="monotone" dataKey="total" stroke="hsl(var(--primary))" strokeWidth={3} />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="mb-6 flex justify-end">
-        <button
+        <Button
           onClick={() => {
             let csv = 'Date,' + categories.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(',') + ',Total\n';
             filteredEntries.forEach(([date, data]) => {
@@ -359,79 +542,94 @@ const Dashboard = () => {
             link.download = `${month || 'expenses'}_breakdown.csv`;
             link.click();
           }}
-          className="py-2 px-4 rounded-xl text-white font-bold shadow-md transition bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+          variant="outline"
         >
-          ⬇️ Download CSV
-        </button>
+          <Download className="h-4 w-4 mr-2" />
+          Download CSV
+        </Button>
       </div>
 
       {filteredEntries.length > 0 && (
-        <div className="mb-10 overflow-x-auto">
-          <div className="font-semibold mb-2">📅 Daily Breakdown</div>
-          <table className="min-w-full bg-white rounded-xl shadow overflow-x-auto text-xs sm:text-sm">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="p-2 text-left">Date</th>
-                {categories.map(cat => (
-                  <th key={cat} className="p-2 text-left capitalize">{cat}</th>
-                ))}
-                <th className="p-2 text-left">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredEntries.map(([date, data]) => {
-                const total = categories.reduce((acc, cat) => {
-                  if (data[cat] && typeof data[cat] === 'object') {
-                    return acc + Object.values(data[cat]).reduce((sum, v) => sum + (parseInt(v) || 0), 0);
-                  }
-                  return acc + (parseInt(data[cat]) || 0);
-                }, 0);
-                return (
-                  <tr key={date} className="border-b hover:bg-gray-50">
-                    <td className="p-2 font-mono text-xs">{date}</td>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Daily Breakdown</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-xs sm:text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="p-2 text-left font-semibold">Date</th>
                     {categories.map(cat => (
-                      <td key={cat} className="p-2">
-                        {(cat === 'other' || cat === 'grocery' || cat === 'transport') && data[cat] && typeof data[cat] === 'object' ? (
-                          <details>
-                            <summary className="cursor-pointer text-blue-600">
-                              {Object.values(data[cat]).reduce((sum, v) => sum + (parseInt(v) || 0), 0)} Tk
-                            </summary>
-                            <ul className="ml-4 text-xs">
-                              {Object.entries(data[cat]).map(([label, value], idx) => (
-                                <li key={idx}>{label}: {value} Tk</li>
-                              ))}
-                            </ul>
-                          </details>
-                        ) : (
-                          data[cat] || 0
-                        )}
-                      </td>
+                      <th key={cat} className="p-2 text-left font-semibold capitalize">{cat.replace(/([A-Z])/g, " $1").trim()}</th>
                     ))}
-                    <td className="p-2 font-bold">{total} Tk</td>
+                    <th className="p-2 text-left font-semibold">Total</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody>
+                  {filteredEntries.map(([date, data]) => {
+                    const total = categories.reduce((acc, cat) => {
+                      if (data[cat] && typeof data[cat] === 'object') {
+                        return acc + Object.values(data[cat]).reduce((sum, v) => sum + (parseInt(v) || 0), 0);
+                      }
+                      return acc + (parseInt(data[cat]) || 0);
+                    }, 0);
+                    return (
+                      <tr key={date} className="border-b hover:bg-muted/50">
+                        <td className="p-2 font-mono text-xs">{date}</td>
+                        {categories.map(cat => (
+                          <td key={cat} className="p-2">
+                            {(cat === 'other' || cat === 'grocery' || cat === 'transport') && data[cat] && typeof data[cat] === 'object' ? (
+                              <details>
+                                <summary className="cursor-pointer text-primary hover:underline">
+                                  {Object.values(data[cat]).reduce((sum, v) => sum + (parseInt(v) || 0), 0).toLocaleString()} Tk
+                                </summary>
+                                <ul className="ml-4 text-xs mt-1 space-y-1">
+                                  {Object.entries(data[cat]).map(([label, value], idx) => (
+                                    <li key={idx}>{label}: {value.toLocaleString()} Tk</li>
+                                  ))}
+                                </ul>
+                              </details>
+                            ) : (
+                              data[cat] ? parseInt(data[cat]).toLocaleString() : 0
+                            )}
+                          </td>
+                        ))}
+                        <td className="p-2 font-bold">{total.toLocaleString()} Tk</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
-      <div className="mt-8">
-        <h4 className="font-semibold mb-2">🔁 Recurring Expenses</h4>
-        {recurringExpenses.length === 0 ? (
-          <p className="text-gray-500">No recurring expenses detected.</p>
-        ) : (
-          <div className="flex flex-col sm:flex-row gap-4 flex-wrap">
-            {recurringExpenses.map((item, idx) => (
-              <div key={idx} className="p-4 bg-white rounded-xl shadow border min-w-[200px]">
-                <div className="font-bold text-blue-700">{item.label}</div>
-                <div className="text-xs text-gray-500">{item.amount} Tk</div>
-                <div className="text-xs text-gray-400 mt-1">on {item.dates.join(", ")}</div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Recurring Expenses</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {recurringExpenses.length === 0 ? (
+            <p className="text-muted-foreground">No recurring expenses detected.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {recurringExpenses.map((item, idx) => (
+                <Card key={idx}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">{item.label}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-lg font-bold text-primary">{item.amount.toLocaleString()} Tk</div>
+                    <div className="text-xs text-muted-foreground mt-1">on {item.dates.join(", ")}</div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

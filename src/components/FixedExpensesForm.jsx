@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { ref, set } from "firebase/database";
 import db from "../firebase";
+import { toast } from "./ui/use-toast";
 
 export default function FixedExpensesForm() {
   const [month, setMonth] = useState("");
@@ -15,7 +16,14 @@ export default function FixedExpensesForm() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!month) return alert("Month required");
+    if (!month) {
+      toast({
+        title: "Month required",
+        description: "Please select a month",
+        variant: "warning",
+      });
+      return;
+    }
 
     set(ref(db, `months/${month}/fixed`), {
       rent: parseInt(expenses.rent) || 0,
@@ -24,7 +32,11 @@ export default function FixedExpensesForm() {
       other: parseInt(expenses.other) || 0,
     });
 
-    alert("Fixed Expenses Saved!");
+    toast({
+      title: "Fixed expenses saved",
+      description: "Your fixed expenses have been saved successfully",
+      variant: "success",
+    });
     setExpenses({ rent: "", groceries: "", transport: "", other: "" });
   };
 

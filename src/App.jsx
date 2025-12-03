@@ -9,6 +9,7 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminPanel from "./pages/AdminPanel";
 import Home from "./pages/Home";
 import Footer from "./components/Footer";
+import { Toaster } from "./components/ui/toast";
 
 function App() {
 
@@ -33,6 +34,7 @@ function App() {
         />
       </Routes>
       <Footer/>
+      <Toaster />
      </div>
     </Router>
   );

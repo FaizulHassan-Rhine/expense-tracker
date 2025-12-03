@@ -3,6 +3,13 @@ import { ref, get, set, update } from "firebase/database";
 import db from "../firebase";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import { Label } from "./ui/label";
+import { DatePicker } from "./ui/date-picker";
+import { MonthPicker } from "./ui/month-picker";
+import { Plus, X, Calendar } from "lucide-react";
 
 const fixedFields = ["houseRent", "savings", "internet", "electricity"];
 const categories = ["transport", "grocery"];
@@ -269,154 +276,186 @@ const DailyExpenseForm = ({ month }) => {
   };
 
   return (
-    <div className="container mx-auto bg-white p-4 sm:p-8 mt-10 sm:mt-20 shadow-xl rounded-2xl max-w-full sm:max-w-4xl">
+    <div className="container mx-auto p-4 sm:p-8 mt-10 sm:mt-20 max-w-full sm:max-w-4xl">
       <ToastContainer />
-      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-        <div>
-          <label className="block font-semibold text-blue-700 mb-1">Date</label>
-          <input
-            type="date"
-            value={date}
-            min={month ? `${month}-01` : ""}
-            max={month ? `${month}-31` : ""}
-            onChange={(e) => setDate(e.target.value)}
-            className="w-full p-2 sm:p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
-            disabled={loading || !month}
-          />
-        </div>
-
-        {fixedFieldsToShow.map((cat) => (
-          <div key={cat}>
-            <label className="block capitalize font-medium">{cat}</label>
-            <input
-              type="number"
-              name={cat}
-              value={dailyExpenses[cat] || ""}
-              onChange={handleChange}
-              min="0"
-              className="w-full p-2 sm:p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
-              disabled={loading}
-            />
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Calendar className="h-6 w-6 text-primary" />
+            <CardTitle className="text-2xl sm:text-3xl">Daily Expenses</CardTitle>
           </div>
-        ))}
+          <CardDescription>
+            Record your daily expenses and track your spending
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="date">Date</Label>
+              <DatePicker
+                date={date ? new Date(date + 'T00:00:00') : null}
+                onSelect={(selectedDate) => {
+                  if (selectedDate) {
+                    const year = selectedDate.getFullYear();
+                    const monthNum = String(selectedDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(selectedDate.getDate()).padStart(2, '0');
+                    setDate(`${year}-${monthNum}-${day}`);
+                  } else {
+                    setDate("");
+                  }
+                }}
+                placeholder="Select date"
+                disabled={loading || !month}
+              />
+            </div>
 
-        {/* Grocery multi-input */}
-        <div>
-          <label className="block font-semibold mb-1">Grocery (multiple)</label>
-          {groceryEntries.map((entry, idx) => (
-            <div key={idx} className="flex items-center gap-2 mb-2 flex-col sm:flex-row">
-              <input
-                type="text"
-                placeholder="Label (e.g., Rice)"
-                value={entry.label}
-                onChange={(e) => handleGroceryChange(idx, "label", e.target.value)}
-                className="w-full p-2 sm:p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
-              />
-              <input
-                type="number"
-                placeholder="Amount"
-                value={entry.amount}
-                onChange={(e) => handleGroceryChange(idx, "amount", e.target.value)}
-                className="w-full p-2 sm:p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
-              />
-              <button
-                type="button"
-                onClick={() => removeGroceryEntry(idx)}
-                className="text-red-500 font-bold"
-              >
-                &times;
-              </button>
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={addGroceryEntry}
-            className="mt-1 px-3 py-1 cursor-pointer bg-blue-500 text-white rounded w-full sm:w-auto"
-          >
-            + Add Another
-          </button>
-        </div>
-        {/* Transport multi-input */}
-        <div>
-          <label className="block font-semibold mb-1">Transport (multiple)</label>
-          {transportEntries.map((entry, idx) => (
-            <div key={idx} className="flex items-center gap-2 mb-2 flex-col sm:flex-row">
-              <input
-                type="text"
-                placeholder="Label (e.g., Bus Fare)"
-                value={entry.label}
-                onChange={(e) => handleTransportChange(idx, "label", e.target.value)}
-                className="w-full p-2 sm:p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
-              />
-              <input
-                type="number"
-                placeholder="Amount"
-                value={entry.amount}
-                onChange={(e) => handleTransportChange(idx, "amount", e.target.value)}
-                className="w-full p-2 sm:p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
-              />
-              <button
-                type="button"
-                onClick={() => removeTransportEntry(idx)}
-                className="text-red-500 font-bold"
-              >
-                &times;
-              </button>
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={addTransportEntry}
-            className="mt-1 px-3 py-1 cursor-pointer bg-blue-500 text-white rounded w-full sm:w-auto"
-          >
-            + Add Another
-          </button>
-        </div>
-        {/* Other Expenses multi-input */}
-        <div>
-          <label className="block font-semibold mb-1">Other Expenses (multiple)</label>
-          {otherEntries.map((entry, idx) => (
-            <div key={idx} className="flex items-center gap-2 mb-2 flex-col sm:flex-row">
-              <input
-                type="text"
-                placeholder="Label (e.g., Fruits)"
-                value={entry.label}
-                onChange={(e) => handleOtherChange(idx, "label", e.target.value)}
-                className="w-full p-2 sm:p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
-              />
-              <input
-                type="number"
-                placeholder="Amount"
-                value={entry.amount}
-                onChange={(e) => handleOtherChange(idx, "amount", e.target.value)}
-                className="w-full p-2 sm:p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
-              />
-              <button
-                type="button"
-                onClick={() => removeOtherEntry(idx)}
-                className="text-red-500 font-bold"
-              >
-                &times;
-              </button>
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={addOtherEntry}
-            className="mt-1 px-3 py-1 cursor-pointer bg-blue-500 text-white rounded w-full sm:w-auto"
-          >
-            + Add Another
-          </button>
-        </div>
+            {fixedFieldsToShow.map((cat) => (
+              <div key={cat} className="space-y-2">
+                <Label htmlFor={cat} className="capitalize">
+                  {cat.replace(/([A-Z])/g, " $1").trim()}
+                </Label>
+                <Input
+                  id={cat}
+                  type="number"
+                  name={cat}
+                  value={dailyExpenses[cat] || ""}
+                  onChange={handleChange}
+                  min="0"
+                  placeholder="0"
+                  disabled={loading}
+                />
+              </div>
+            ))}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className={`w-full py-2 sm:py-3 rounded-xl cursor-pointer text-white font-bold shadow-md transition bg-gradient-to-r from-green-600 to-green-400 hover:from-green-800 hover:to-green-600 ${loading ? "opacity-60 cursor-not-allowed" : ""}`}
-        >
-          {loading ? "Saving..." : "Save Daily Expenses"}
-        </button>
-      </form>
+            {/* Grocery multi-input */}
+            <div className="space-y-3">
+              <Label>Grocery (multiple)</Label>
+              {groceryEntries.map((entry, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <Input
+                    type="text"
+                    placeholder="Label (e.g., Rice)"
+                    value={entry.label}
+                    onChange={(e) => handleGroceryChange(idx, "label", e.target.value)}
+                    className="flex-1"
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Amount"
+                    value={entry.amount}
+                    onChange={(e) => handleGroceryChange(idx, "amount", e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeGroceryEntry(idx)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addGroceryEntry}
+                className="w-full sm:w-auto"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Another
+              </Button>
+            </div>
+            {/* Transport multi-input */}
+            <div className="space-y-3">
+              <Label>Transport (multiple)</Label>
+              {transportEntries.map((entry, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <Input
+                    type="text"
+                    placeholder="Label (e.g., Bus Fare)"
+                    value={entry.label}
+                    onChange={(e) => handleTransportChange(idx, "label", e.target.value)}
+                    className="flex-1"
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Amount"
+                    value={entry.amount}
+                    onChange={(e) => handleTransportChange(idx, "amount", e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeTransportEntry(idx)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addTransportEntry}
+                className="w-full sm:w-auto"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Another
+              </Button>
+            </div>
+            {/* Other Expenses multi-input */}
+            <div className="space-y-3">
+              <Label>Other Expenses (multiple)</Label>
+              {otherEntries.map((entry, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <Input
+                    type="text"
+                    placeholder="Label (e.g., Fruits)"
+                    value={entry.label}
+                    onChange={(e) => handleOtherChange(idx, "label", e.target.value)}
+                    className="flex-1"
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Amount"
+                    value={entry.amount}
+                    onChange={(e) => handleOtherChange(idx, "amount", e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeOtherEntry(idx)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addOtherEntry}
+                className="w-full sm:w-auto"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Another
+              </Button>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full"
+              size="lg"
+            >
+              {loading ? "Saving..." : "Save Daily Expenses"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };

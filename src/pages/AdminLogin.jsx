@@ -1,43 +1,111 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Button } from "../components/ui/button";
+import { Lock, LogIn } from "lucide-react";
+import { toast } from "../components/ui/use-toast";
 
 const AdminLogin = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
+  // Check if already logged in
+  useEffect(() => {
+    const isAdmin = localStorage.getItem("isAdmin");
+    if (isAdmin === "true") {
+      navigate("/admin-panel", { replace: true });
+    }
+  }, [navigate]);
+
   const handleLogin = (e) => {
     e.preventDefault();
     if (username === "admin" && password === "1234") {
-      localStorage.setItem("isAdmin", "true");
-      navigate("/admin-panel");
+      try {
+        // Set localStorage first
+        localStorage.setItem("isAdmin", "true");
+        
+        // Verify it was set
+        const verify = localStorage.getItem("isAdmin");
+        if (verify !== "true") {
+          toast({
+            title: "Error",
+            description: "Failed to save login session. Please try again.",
+            variant: "error",
+          });
+          return;
+        }
+
+        toast({
+          title: "Login successful",
+          description: "Welcome to the admin panel",
+          variant: "success",
+        });
+        
+        // Navigate immediately - React Router will handle it
+        navigate("/admin-panel", { replace: true });
+      } catch (error) {
+        console.error("Login error:", error);
+        toast({
+          title: "Error",
+          description: "Failed to save login: " + (error.message || "Unknown error"),
+          variant: "error",
+        });
+      }
     } else {
-      alert("Invalid credentials");
+      toast({
+        title: "Invalid credentials",
+        description: "Please check your username and password",
+        variant: "error",
+      });
     }
   };
 
   return (
-    <div className="max-w-full sm:max-w-sm mx-auto mt-10 sm:mt-20 p-4 sm:p-6 bg-white shadow rounded">
-      <h2 className="text-xl font-bold mb-4 text-center">Admin Login</h2>
-      <form onSubmit={handleLogin} className="space-y-3 sm:space-y-4">
-        <input
-          type="text"
-          placeholder="Username"
-          className="w-full p-2 sm:p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          className="w-full p-2 sm:p-3 border-0 border-b-2 border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button type="submit" className={`w-full py-2 sm:py-3 rounded-xl text-white font-bold shadow-md transition bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600`}>
-          Login
-        </button>
-      </form>
+    <div className="container mx-auto p-4 sm:p-8 mt-20 max-w-md">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lock className="h-5 w-5 text-primary" />
+            Admin Login
+          </CardTitle>
+          <CardDescription>
+            Enter your credentials to access the admin panel
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                type="text"
+                placeholder="Enter username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <Button type="submit" className="w-full" size="lg">
+              <LogIn className="mr-2 h-4 w-4" />
+              Login
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };

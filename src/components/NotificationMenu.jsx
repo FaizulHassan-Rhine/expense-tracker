@@ -1,11 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { FiBell } from "react-icons/fi";
+import { Bell } from "lucide-react";
 import { ref, onValue, update } from "firebase/database";
 import db from "../firebase";
+import { Button } from "./ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { Badge } from "./ui/badge";
 
 const NotificationMenu = ({ userId = "global" }) => {
   const [notifications, setNotifications] = useState([]);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
     const notifRef = ref(db, `notifications/${userId}`);
@@ -31,39 +38,41 @@ const NotificationMenu = ({ userId = "global" }) => {
   };
 
   return (
-    <div className="relative">
-      <button
-        onClick={() => {
-          setDropdownOpen(!dropdownOpen);
-          markAsRead();
-        }}
-        className="relative"
-      >
-        <FiBell size={22} />
-        {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 bg-red-500 rounded-full w-2.5 h-2.5"></span>
-        )}
-      </button>
-
-      {dropdownOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-white shadow-lg rounded p-2 text-sm z-50 max-h-72 overflow-y-auto">
-          {notifications.length === 0 ? (
-            <p className="text-gray-500">No notifications</p>
-          ) : (
-            notifications.map((n) => (
-              <div
+    <DropdownMenu onOpenChange={(open) => open && markAsRead()}>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="relative">
+          <Bell className="h-5 w-5" />
+          {unreadCount > 0 && (
+            <Badge
+              variant="destructive"
+              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+            >
+              {unreadCount}
+            </Badge>
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-80">
+        {notifications.length === 0 ? (
+          <div className="p-4 text-center text-muted-foreground text-sm">
+            No notifications
+          </div>
+        ) : (
+          <div className="max-h-72 overflow-y-auto">
+            {notifications.map((n) => (
+              <DropdownMenuItem
                 key={n.id}
-                className={`p-2 border-b ${
-                  n.read ? "text-gray-500" : "text-black font-medium"
+                className={`p-3 ${
+                  n.read ? "text-muted-foreground" : "font-medium"
                 }`}
               >
                 {n.message}
-              </div>
-            ))
-          )}
-        </div>
-      )}
-    </div>
+              </DropdownMenuItem>
+            ))}
+          </div>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 
