@@ -8,13 +8,13 @@ import "../index.css";
 export default function Home() {
   return (
     <div className="home-banner relative">
-      <div className="absolute inset-0 bg-black/40" />
-      <div className="relative z-10 container mx-auto px-4 py-20">
-        <div className="max-w-4xl mx-auto text-center space-y-8">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-4">
+      <div className="absolute inset-0" />
+      <div className="relative z-10 container mx-auto px-4 py-12 sm:py-16 md:py-20">
+        <div className="max-w-4xl mx-auto text-center space-y-6 sm:space-y-8">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4">
             Take Control of Your Finances
           </h1>
-          <p className="text-xl sm:text-2xl text-white/90 mb-8">
+          <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-6 sm:mb-8">
             Track your expenses, manage your budget, and achieve your financial goals
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -23,7 +23,7 @@ export default function Home() {
                 Get Started <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="text-lg px-8 bg-white/10 border-white/20 text-white hover:bg-white/20" asChild>
+            <Button size="lg" variant="outline" className="text-lg px-8 bg-gray-100 border-gray-300 text-gray-900 hover:bg-gray-200" asChild>
               <Link to="/dashboard">
                 View Dashboard
               </Link>
@@ -31,7 +31,7 @@ export default function Home() {
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mt-12 sm:mt-16 max-w-5xl mx-auto">
           <Card className="bg-white/95 backdrop-blur-sm">
             <CardHeader>
               <DollarSign className="h-8 w-8 text-primary mb-2" />

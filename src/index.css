@@ -95,16 +95,17 @@
 }
 
 .home-banner {
-  background-image: url('/banner.webp');
+  background-color: #ffffff;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  color: white;
+  color: #000000;
   text-align: center;
+  padding-top: 80px;
 }
 
 .custom-datepicker-popper,

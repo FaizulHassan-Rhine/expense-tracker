@@ -3,8 +3,12 @@ import { useState } from "react";
 import { ref, set } from "firebase/database";
 import db from "../firebase";
 import { toast } from "./ui/use-toast";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Button } from "./ui/button";
 
-export default function FixedExpensesForm() {
+export default function FixedExpensesForm({ showCard = true }) {
   const [month, setMonth] = useState("");
   const [expenses, setExpenses] = useState({
     rent: "",
@@ -44,33 +48,60 @@ export default function FixedExpensesForm() {
     setExpenses((prev) => ({ ...prev, [field]: value }));
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4 bg-white p-4 rounded shadow">
-      <div>
-        <label className="block font-medium">Month (same as above)</label>
-        <input
+  const formContent = (
+    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+      <div className="space-y-2">
+        <Label htmlFor="fixed-month" className="text-sm sm:text-base font-medium">Month</Label>
+        <Input
+          id="fixed-month"
           type="text"
           value={month}
           onChange={(e) => setMonth(e.target.value)}
-          placeholder="2025-06"
-          className="w-full p-2 border rounded"
+          placeholder="2025-01"
+          className="text-sm"
         />
       </div>
 
-      {["rent", "groceries", "transport", "other"].map((field) => (
-        <div key={field}>
-          <label className="block capitalize font-medium">{field}</label>
-          <input
-            type="number"
-            value={expenses[field]}
-            onChange={(e) => updateField(field, e.target.value)}
-            placeholder={`Enter ${field} amount`}
-            className="w-full p-2 border rounded"
-          />
-        </div>
-      ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        {["rent", "groceries", "transport", "other"].map((field) => (
+          <div key={field} className="space-y-1 sm:space-y-2">
+            <Label htmlFor={`fixed-${field}`} className="text-xs sm:text-sm font-medium capitalize">
+              {field}
+            </Label>
+            <Input
+              id={`fixed-${field}`}
+              type="number"
+              min="0"
+              value={expenses[field]}
+              onChange={(e) => updateField(field, e.target.value)}
+              placeholder="0"
+              className="text-sm"
+            />
+          </div>
+        ))}
+      </div>
 
-      <button type="submit" className="bg-green-500 text-white w-full p-2 rounded">Save Fixed Expenses</button>
+      <Button type="submit" className="w-full" size="lg">
+        Save Fixed Expenses
+      </Button>
     </form>
+  );
+
+  return showCard ? (
+    <Card className="w-full">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg sm:text-xl md:text-2xl">Fixed Expenses</CardTitle>
+        <CardDescription className="text-xs sm:text-sm mt-1">
+          Set your fixed monthly expenses (optional)
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4 sm:space-y-6">
+        {formContent}
+      </CardContent>
+    </Card>
+  ) : (
+    <div className="space-y-4 sm:space-y-6">
+      {formContent}
+    </div>
   );
 }

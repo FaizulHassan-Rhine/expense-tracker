@@ -105,7 +105,7 @@ const MonthlyBudgetInput = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 sm:p-8 mt-10 sm:mt-20 max-w-full sm:max-w-4xl">
+    <div className="container mx-auto p-4 sm:p-8 mt-20 sm:mt-20 max-w-full sm:max-w-4xl">
       <ToastContainer position="top-right" autoClose={3000} />
       <Card>
         <CardHeader>
