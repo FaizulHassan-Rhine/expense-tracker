@@ -9,7 +9,7 @@ export default function ExpenseSummary({ month }) {
   const [summary, setSummary] = useState(null);
   const [dailyExpenses, setDailyExpenses] = useState({});
 
-  const fixedCategories = ["houseRent", "internet"];
+  const fixedCategories = ["houseRent", "savings", "internet", "electricity"];
   const normalCategories = ["transport", "grocery"];
   const allCategories = [...fixedCategories, ...normalCategories];
 
@@ -44,7 +44,7 @@ export default function ExpenseSummary({ month }) {
   const getDayTotal = (day) => {
     let total = 0;
     
-    // Handle fixed categories (houseRent, internet)
+    // Handle fixed categories (houseRent, savings, internet, electricity)
     fixedCategories.forEach(cat => {
       total += parseInt(day[cat]) || 0;
     });

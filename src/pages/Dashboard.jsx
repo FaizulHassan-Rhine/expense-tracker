@@ -92,9 +92,33 @@ const Dashboard = () => {
   // Helper to check if a date is within the selected range
   function isInRange(dateStr, start, end) {
     if (!start && !end) return true;
-    const d = new Date(dateStr);
-    if (start && d < new Date(start)) return false;
-    if (end && d > new Date(end)) return false;
+    
+    // Normalize dates to compare only the date part (ignore time)
+    const normalizeDate = (date) => {
+      if (!date) return null;
+      
+      // If it's already a Date object, use it directly
+      if (date instanceof Date) {
+        return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      }
+      
+      // If it's a string in YYYY-MM-DD format, parse it directly to avoid timezone issues
+      if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        const [year, month, day] = date.split('-').map(Number);
+        return new Date(year, month - 1, day);
+      }
+      
+      // Otherwise, parse as Date and normalize
+      const d = new Date(date);
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    };
+    
+    const dateToCheck = normalizeDate(dateStr);
+    const startDate = normalizeDate(start);
+    const endDate = normalizeDate(end);
+    
+    if (startDate && dateToCheck < startDate) return false;
+    if (endDate && dateToCheck > endDate) return false;
     return true;
   }
 
